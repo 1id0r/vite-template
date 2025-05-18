@@ -368,7 +368,7 @@ export function DataTable() {
               </Badge>
             );
           })}
-          <Button variant="subtle" size="xs" compact onClick={() => setColumnFilters([])}>
+          <Button variant="subtle" size="xs" onClick={() => setColumnFilters([])}>
             Clear All
           </Button>
         </Group>
@@ -377,7 +377,7 @@ export function DataTable() {
       <Table
         striped
         highlightOnHover
-        withBorder
+        withTableBorder
         withColumnBorders
         style={{
           tableLayout: 'fixed',
@@ -410,7 +410,7 @@ export function DataTable() {
                     backgroundColor: 'var(--mantine-color-gray-0)',
                   }}
                 >
-                  <Group justify="apart" spacing="sm">
+                  <Group justify="apart">
                     <Box onClick={header.column.getToggleSortingHandler()}>
                       {flexRender(header.column.columnDef.header, header.getContext())}
                       {header.column.getIsSorted() === 'asc' && ' ↑'}
