@@ -130,54 +130,64 @@ const columns = [
     header: 'Object ID',
     cell: (info) => info.getValue(),
     enableColumnFilter: true,
+    size: 120, // Increase width for Object ID
   }),
   columnHelper.accessor('description', {
     header: 'Description',
     cell: (info) => <Text lineClamp={2}>{info.getValue()}</Text>,
     enableColumnFilter: true,
+    size: 200, // Wider for description since it has more content
   }),
   columnHelper.accessor('hierarchy', {
     header: 'Hierarchy',
     cell: (info) => info.getValue(),
     enableColumnFilter: true,
+    size: 180, // Wider for hierarchy
   }),
   columnHelper.accessor('lastUpdated', {
     header: 'Last Updated',
     cell: (info) => info.getValue(),
     enableColumnFilter: true,
+    size: 140, // Suitable for date
   }),
   columnHelper.accessor('startTime', {
     header: 'Start Time',
     cell: (info) => info.getValue(),
     enableColumnFilter: true,
+    size: 140, // Suitable for date
   }),
   columnHelper.accessor('status', {
     header: 'Status',
     cell: (info) => <StatusBadge status={info.getValue()} />,
     enableColumnFilter: true,
     filterFn: 'equals',
+    size: 100, // Status badges are small
   }),
   columnHelper.accessor('impact', {
     header: 'Impact',
     cell: (info) => <ImpactBadge impact={info.getValue()} />,
     enableColumnFilter: true,
     filterFn: 'equals',
+    size: 100, // Impact badges are small
   }),
   columnHelper.accessor('environment', {
     header: 'Environment',
     cell: (info) => <EnvironmentBadge environment={info.getValue()} />,
     enableColumnFilter: true,
     filterFn: 'equals',
+    size: 120, // Slightly wider for environment
   }),
   columnHelper.accessor('origin', {
     header: 'Origin',
     cell: (info) => info.getValue(),
     enableColumnFilter: true,
+    size: 100, // Suitable for origin
   }),
   columnHelper.accessor('snId', {
     header: 'SN ID',
     cell: (info) => info.getValue(),
     enableColumnFilter: true,
+    size: 120, // Suitable for SN ID
   }),
   columnHelper.accessor('identities', {
     header: 'Identities',
@@ -190,6 +200,7 @@ const columns = [
         identity.toLowerCase().includes(filterValue.toLowerCase())
       );
     },
+    size: 200, // Wider for identities since it can have multiple values
   }),
 ];
 
@@ -235,7 +246,7 @@ const ColumnFilter = ({ column, table }: { column: any; table: any }) => {
           </ActionIcon>
         </Popover.Target>
         <Popover.Dropdown>
-          <Stack spacing="xs">
+          <Stack>
             <Text size="sm" weight={500}>
               Filter {column.columnDef.header}
             </Text>

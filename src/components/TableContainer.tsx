@@ -4,7 +4,7 @@ import { DataTable } from './DataTable';
 
 const TableContainer = () => {
   return (
-    <Container size="xl" py="xl">
+    <Container size="xxl" py="xl">
       <Stack>
         <Title order={1}>Advanced Data Table</Title>
         <Paper shadow="xs" p="md" withBorder>
