@@ -588,7 +588,7 @@ export function DataTable() {
               style={{
                 position: 'sticky',
                 top: 0,
-                backgroundColor: 'var(--mantine-color-grey-3)',
+                backgroundColor: 'transparent',
                 zIndex: 10,
               }}
             >
@@ -604,11 +604,10 @@ export function DataTable() {
                         minWidth: `${header.getSize()}px`,
                         maxWidth: `${header.getSize()}px`,
                         padding: '12px 16px',
-
-                        fontWeight: 600,
-                        backgroundColor: 'grey',
+                        fontWeight: 500,
+                        backgroundColor: 'transparent',
                         borderRight: '1px solid black',
-                        borderBottom: '2px solid black',
+                        // borderBottom: '2px solid black',
                         userSelect: 'none',
                         textAlign: 'left',
                       }}
@@ -634,7 +633,7 @@ export function DataTable() {
                             right: 0,
                             top: 0,
                             height: '100%',
-                            width: '5px',
+                            width: '2px',
                             background: 'transparent',
                             cursor: 'col-resize',
                             userSelect: 'none',
@@ -643,7 +642,7 @@ export function DataTable() {
                             zIndex: 1,
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'var(--mantine-color-blue-6)';
+                            e.currentTarget.style.background = 'grey';
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.background = 'transparent';
