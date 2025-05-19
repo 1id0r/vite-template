@@ -1,6 +1,13 @@
-// src/components/DataTable.tsx
+// Updated DataTable.tsx with severity column and row coloring
 import { useMemo, useState } from 'react';
-import { IconChevronDown, IconFilter, IconSearch } from '@tabler/icons-react';
+import {
+  IconChevronDown,
+  IconColumns,
+  IconEye,
+  IconEyeOff,
+  IconFilter,
+  IconSearch,
+} from '@tabler/icons-react';
 import {
   ColumnFiltersState,
   createColumnHelper,
@@ -12,12 +19,14 @@ import {
   getSortedRowModel,
   SortingState,
   useReactTable,
+  VisibilityState,
 } from '@tanstack/react-table';
 import {
   ActionIcon,
   Badge,
   Box,
   Button,
+  Divider,
   Group,
   Menu,
   Pagination,
@@ -25,12 +34,14 @@ import {
   rem,
   Select,
   Stack,
+  Switch,
   Table,
   Text,
   TextInput,
+  Tooltip,
 } from '@mantine/core';
 
-// Define the data type for our table
+// Define the data type for our table - update severity types
 export type DataItem = {
   id: string;
   objectId: string;
@@ -44,6 +55,8 @@ export type DataItem = {
   origin: string;
   snId: string;
   identities: string[];
+  isNew?: boolean;
+  severity: 'warning' | 'major' | 'critical'; // Updated severity field
 };
 
 // Generate mock data
@@ -51,11 +64,12 @@ const generateMockData = (): DataItem[] => {
   const statuses = ['active', 'inactive', 'pending', 'resolved'] as const;
   const impacts = ['high', 'medium', 'low'] as const;
   const environments = ['production', 'staging', 'development'] as const;
+  const severities = ['warning', 'major', 'critical'] as const; // New severity values
 
   return Array.from({ length: 50 }, (_, i) => ({
     id: `id-${i + 1}`,
     objectId: `OBJ-${Math.floor(10000 + Math.random() * 90000)}`,
-    description: `Issue description for item ${i + 1}`,
+    description: `Issue description for item ${i + 1} - This is a longer description to test the column width and text wrapping behavior`,
     hierarchy: `Root / Level ${Math.floor(Math.random() * 3) + 1} / Sublevel ${Math.floor(Math.random() * 5) + 1}`,
     lastUpdated: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000)
       .toISOString()
@@ -72,6 +86,7 @@ const generateMockData = (): DataItem[] => {
       { length: Math.floor(Math.random() * 3) + 1 },
       (_, j) => `Identity-${i}-${j}`
     ),
+    severity: severities[Math.floor(Math.random() * severities.length)], // Add random severity
   }));
 };
 
@@ -121,77 +136,110 @@ const EnvironmentBadge = ({ environment }: { environment: DataItem['environment'
   );
 };
 
+// New Severity Badge component
+const SeverityBadge = ({ severity }: { severity: DataItem['severity'] }) => {
+  const colorMap = {
+    warning: 'blue',
+    major: 'yellow',
+    critical: 'red',
+  };
+
+  return (
+    <Badge color={colorMap[severity]} variant="filled" radius="md" size="sm">
+      {severity.charAt(0).toUpperCase() + severity.slice(1)}
+    </Badge>
+  );
+};
+
 // Create column definitions using a column helper
 const columnHelper = createColumnHelper<DataItem>();
 
-// Define the columns for our table
+// Define the columns for our table with larger sizes
 const columns = [
   columnHelper.accessor('objectId', {
-    header: 'Object ID',
-    cell: (info) => info.getValue(),
+    header: 'שם יישות',
+    cell: (info) => (
+      <Text c="grey" style={{ fontWeight: 600 }}>
+        {info.getValue()}
+      </Text>
+    ),
     enableColumnFilter: true,
-    size: 120, // Increase width for Object ID
+    size: 150,
   }),
   columnHelper.accessor('description', {
     header: 'Description',
-    cell: (info) => <Text lineClamp={2}>{info.getValue()}</Text>,
+    cell: (info) => (
+      <Tooltip label={info.getValue()} multiline width={300} withArrow>
+        <Text
+          c="black"
+          style={{
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            maxWidth: '300px',
+          }}
+        >
+          {info.getValue()}
+        </Text>
+      </Tooltip>
+    ),
     enableColumnFilter: true,
-    size: 200, // Wider for description since it has more content
+    size: 300,
   }),
   columnHelper.accessor('hierarchy', {
-    header: 'Hierarchy',
-    cell: (info) => info.getValue(),
+    header: 'היררכיה',
+    cell: (info) => <Text color="black">{info.getValue()}</Text>,
     enableColumnFilter: true,
-    size: 180, // Wider for hierarchy
+    size: 250,
   }),
   columnHelper.accessor('lastUpdated', {
-    header: 'Last Updated',
-    cell: (info) => info.getValue(),
+    header: 'עודכן לאחרונה',
+    cell: (info) => <Text color="black">{info.getValue()}</Text>,
     enableColumnFilter: true,
-    size: 140, // Suitable for date
+    size: 150,
   }),
   columnHelper.accessor('startTime', {
-    header: 'Start Time',
-    cell: (info) => info.getValue(),
+    header: 'זמן התחלה',
+    cell: (info) => <Text color="black">{info.getValue()}</Text>,
     enableColumnFilter: true,
-    size: 140, // Suitable for date
+    size: 150,
   }),
   columnHelper.accessor('status', {
-    header: 'Status',
+    header: 'סטטוס',
     cell: (info) => <StatusBadge status={info.getValue()} />,
     enableColumnFilter: true,
     filterFn: 'equals',
-    size: 100, // Status badges are small
+    size: 120,
   }),
   columnHelper.accessor('impact', {
-    header: 'Impact',
+    header: 'אימפקט עסקי',
     cell: (info) => <ImpactBadge impact={info.getValue()} />,
     enableColumnFilter: true,
     filterFn: 'equals',
-    size: 100, // Impact badges are small
+    size: 120,
   }),
   columnHelper.accessor('environment', {
-    header: 'Environment',
+    header: 'סביבה',
     cell: (info) => <EnvironmentBadge environment={info.getValue()} />,
     enableColumnFilter: true,
     filterFn: 'equals',
-    size: 120, // Slightly wider for environment
+    size: 150,
   }),
   columnHelper.accessor('origin', {
-    header: 'Origin',
-    cell: (info) => info.getValue(),
+    header: 'מקור התראה',
+    cell: (info) => <Text color="black">{info.getValue()}</Text>,
     enableColumnFilter: true,
-    size: 100, // Suitable for origin
+    size: 120,
   }),
   columnHelper.accessor('snId', {
-    header: 'SN ID',
-    cell: (info) => info.getValue(),
+    header: 'SN מזהה',
+    cell: (info) => <Text color="black">{info.getValue()}</Text>,
     enableColumnFilter: true,
-    size: 120, // Suitable for SN ID
+    size: 150,
   }),
   columnHelper.accessor('identities', {
     header: 'Identities',
-    cell: (info) => info.getValue().join(', '),
+    cell: (info) => <Text color="black">{info.getValue()}</Text>,
     enableColumnFilter: true,
     filterFn: (row, columnId, filterValue) => {
       if (!filterValue) return true;
@@ -200,7 +248,15 @@ const columns = [
         identity.toLowerCase().includes(filterValue.toLowerCase())
       );
     },
-    size: 200, // Wider for identities since it can have multiple values
+    size: 250,
+  }),
+  // New Severity column
+  columnHelper.accessor('severity', {
+    header: 'חומרה',
+    cell: (info) => <SeverityBadge severity={info.getValue()} />,
+    enableColumnFilter: true,
+    filterFn: 'equals',
+    size: 120,
   }),
 ];
 
@@ -221,8 +277,13 @@ const ColumnFilter = ({ column, table }: { column: any; table: any }) => {
       ).sort();
     }
 
-    // Handle enum values like status, impact, environment
-    if (column.id === 'status' || column.id === 'impact' || column.id === 'environment') {
+    // Handle enum values like status, impact, environment, severity
+    if (
+      column.id === 'status' ||
+      column.id === 'impact' ||
+      column.id === 'environment' ||
+      column.id === 'severity'
+    ) {
       return Array.from(
         new Set(table.getPreFilteredRowModel().flatRows.map((row: any) => row.getValue(column.id)))
       ).sort();
@@ -236,6 +297,7 @@ const ColumnFilter = ({ column, table }: { column: any; table: any }) => {
     column.id === 'status' ||
     column.id === 'impact' ||
     column.id === 'environment' ||
+    column.id === 'severity' ||
     Array.isArray(firstValue)
   ) {
     return (
@@ -305,6 +367,7 @@ export function DataTable() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -317,28 +380,135 @@ export function DataTable() {
       sorting,
       globalFilter,
       columnFilters,
+      columnVisibility,
       pagination,
     },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: setColumnVisibility,
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
+    // Enable column resizing
+    enableColumnResizing: true,
+    columnResizeMode: 'onChange',
   });
 
+  // Calculate total width based on column sizes
+  const totalWidth =
+    table.getHeaderGroups()[0]?.headers.reduce((sum, header) => sum + header.getSize(), 0) || 0;
+
+  // Column visibility controls
+  const allColumns = table
+    .getAllColumns()
+    .filter((column) => typeof column.accessorFn !== 'undefined' && column.getCanHide());
+
+  const hideAllColumns = () => {
+    const visibilityState: VisibilityState = {};
+    allColumns.forEach((column) => {
+      visibilityState[column.id] = false;
+    });
+    setColumnVisibility(visibilityState);
+  };
+
+  const showAllColumns = () => {
+    setColumnVisibility({});
+  };
+
   return (
-    <div>
+    <div style={{ width: '100%' }}>
       <Group mb="md" justify="apart">
-        <TextInput
-          placeholder="Search all columns..."
-          value={globalFilter ?? ''}
-          onChange={(event) => setGlobalFilter(event.currentTarget.value)}
-          icon={<IconSearch size={rem(16)} />}
-          style={{ width: '300px' }}
-        />
+        <Group>
+          <TextInput
+            placeholder="Search all columns..."
+            value={globalFilter ?? ''}
+            onChange={(event) => setGlobalFilter(event.currentTarget.value)}
+            icon={<IconSearch size={rem(16)} />}
+            style={{ width: '300px' }}
+          />
+
+          {/* Column visibility dropdown */}
+          <Menu shadow="md" width={280} position="bottom-start">
+            <Menu.Target>
+              <Button
+                variant="outline"
+                leftIcon={<IconColumns size={rem(16)} />}
+                rightIcon={<IconChevronDown size={rem(16)} />}
+              >
+                Columns
+              </Button>
+            </Menu.Target>
+
+            <Menu.Dropdown>
+              <div style={{ padding: '8px 0' }}>
+                <Group justify="apart" px="md" pb="xs">
+                  <Text size="sm" weight={600}>
+                    Column Visibility
+                  </Text>
+                  <Group spacing={4}>
+                    <Button size="xs" variant="subtle" onClick={hideAllColumns}>
+                      Hide all
+                    </Button>
+                    <Button size="xs" variant="subtle" onClick={showAllColumns}>
+                      Show all
+                    </Button>
+                  </Group>
+                </Group>
+                <Divider />
+                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                  {allColumns.map((column) => {
+                    const isVisible = column.getIsVisible();
+                    return (
+                      <div
+                        key={column.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '8px 16px',
+                          cursor: 'pointer',
+                          borderRadius: '4px',
+                        }}
+                        onClick={() => column.toggleVisibility()}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'var(--mantine-color-gray-1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                      >
+                        <Group spacing="xs">
+                          <ActionIcon
+                            size="sm"
+                            variant="subtle"
+                            color={isVisible ? 'blue' : 'gray'}
+                          >
+                            {isVisible ? <IconEye size={14} /> : <IconEyeOff size={14} />}
+                          </ActionIcon>
+                          <Text size="sm">
+                            {typeof column.columnDef.header === 'string'
+                              ? column.columnDef.header
+                              : column.id}
+                          </Text>
+                        </Group>
+                        <Switch
+                          checked={isVisible}
+                          onChange={() => column.toggleVisibility()}
+                          size="sm"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </Menu.Dropdown>
+          </Menu>
+        </Group>
+
         <Group>
           <Text size="sm">Items per page:</Text>
           <Select
@@ -385,77 +555,178 @@ export function DataTable() {
         </Group>
       )}
 
-      <Table
-        striped
-        highlightOnHover
-        withTableBorder
-        withColumnBorders
+      {/* Single scrollable table container */}
+      <div
         style={{
-          tableLayout: 'fixed',
+          width: '100%',
+          border: '1px solid var(--mantine-color-gray-3)',
           borderRadius: '8px',
           overflow: 'hidden',
         }}
-        sx={{
-          '& tbody tr': {
-            borderBottom: '1px solid var(--mantine-color-gray-3)',
-          },
-          '& tbody tr:last-of-type': {
-            borderBottom: 'none',
-          },
-        }}
       >
-        <thead>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  style={{
-                    cursor: 'pointer',
-                    position: 'relative',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    padding: '14px 16px',
-                    fontWeight: 600,
-                    backgroundColor: 'var(--mantine-color-gray-0)',
-                  }}
-                >
-                  <Group justify="apart">
-                    <Box onClick={header.column.getToggleSortingHandler()}>
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {header.column.getIsSorted() === 'asc' && ' ↑'}
-                      {header.column.getIsSorted() === 'desc' && ' ↓'}
-                    </Box>
-                    {header.column.getCanFilter() && (
-                      <ColumnFilter column={header.column} table={table} />
-                    )}
-                  </Group>
-                </th>
+        <div
+          style={{
+            width: '100%',
+            height: '70vh',
+            overflow: 'auto',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          }}
+        >
+          <Table
+            striped={false}
+            highlightOnHover={false}
+            withColumnBorders={false}
+            style={{
+              minWidth: `${totalWidth}px`,
+              marginBottom: 0,
+              borderCollapse: 'separate',
+              borderSpacing: '0 8px',
+            }}
+          >
+            <thead
+              style={{
+                position: 'sticky',
+                top: 0,
+                backgroundColor: 'var(--mantine-color-grey-3)',
+                zIndex: 10,
+              }}
+            >
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      style={{
+                        cursor: 'pointer',
+                        position: 'relative',
+                        width: `${header.getSize()}px`,
+                        minWidth: `${header.getSize()}px`,
+                        maxWidth: `${header.getSize()}px`,
+                        padding: '12px 16px',
+
+                        fontWeight: 600,
+                        backgroundColor: 'grey',
+                        borderRight: '1px solid black',
+                        borderBottom: '2px solid black',
+                        userSelect: 'none',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <Group justify="apart" wrap="nowrap">
+                        <Box onClick={header.column.getToggleSortingHandler()}>
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                          {header.column.getIsSorted() === 'asc' && ' ↑'}
+                          {header.column.getIsSorted() === 'desc' && ' ↓'}
+                        </Box>
+                        {header.column.getCanFilter() && (
+                          <ColumnFilter column={header.column} table={table} />
+                        )}
+                      </Group>
+
+                      {/* Column resizer */}
+                      {header.column.getCanResize() && (
+                        <div
+                          onMouseDown={header.getResizeHandler()}
+                          onTouchStart={header.getResizeHandler()}
+                          style={{
+                            position: 'absolute',
+                            right: 0,
+                            top: 0,
+                            height: '100%',
+                            width: '5px',
+                            background: 'transparent',
+                            cursor: 'col-resize',
+                            userSelect: 'none',
+                            touchAction: 'none',
+                            color: 'black',
+                            zIndex: 1,
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'var(--mantine-color-blue-6)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'transparent';
+                          }}
+                        />
+                      )}
+                    </th>
+                  ))}
+                </tr>
               ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody>
-          {table.getRowModel().rows.map((row) => (
-            <tr key={row.id}>
-              {row.getVisibleCells().map((cell) => (
-                <td
-                  key={cell.id}
-                  style={{
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    padding: '12px 16px',
-                  }}
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </Table>
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => {
+                // Set background color based on severity instead of impact
+                const severity = row.original.severity;
+                let rowStyle = {};
+
+                // Color rows based on severity
+                if (severity === 'critical') {
+                  rowStyle = {
+                    backgroundColor: '#ffebee', // Light red for critical severity
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                  };
+                } else if (severity === 'major') {
+                  rowStyle = {
+                    backgroundColor: '#fffde7', // Light yellow for major severity
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                  };
+                } else if (severity === 'warning') {
+                  rowStyle = {
+                    backgroundColor: '#e3f2fd', // Light blue for warning severity
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                  };
+                } else {
+                  rowStyle = {
+                    backgroundColor: 'white',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                  };
+                }
+
+                return (
+                  <tr
+                    key={row.id}
+                    style={{
+                      ...rowStyle,
+                      borderRadius: '8px',
+                    }}
+                  >
+                    {row.getVisibleCells().map((cell, cellIndex) => {
+                      // First cell in the row - apply left border radius
+                      // Last cell in the row - apply right border radius
+                      const isFirstCell = cellIndex === 0;
+                      const isLastCell = cellIndex === row.getVisibleCells().length - 1;
+
+                      return (
+                        <td
+                          key={cell.id}
+                          style={{
+                            width: `${cell.column.getSize()}px`,
+                            minWidth: `${cell.column.getSize()}px`,
+                            maxWidth: `${cell.column.getSize()}px`,
+                            padding: '16px',
+                            backgroundColor: 'inherit',
+                            borderTopLeftRadius: isFirstCell ? '8px' : 0,
+                            borderBottomLeftRadius: isFirstCell ? '8px' : 0,
+                            borderTopRightRadius: isLastCell ? '8px' : 0,
+                            borderBottomRightRadius: isLastCell ? '8px' : 0,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </Table>
+        </div>
+      </div>
 
       <Group justify="apart" mt="md">
         <Text size="sm">

@@ -1,16 +1,13 @@
 import React from 'react';
-import { Container, Paper, Stack, Title } from '@mantine/core';
+import { Box, Container } from '@mantine/core';
 import { DataTable } from './DataTable';
 
 const TableContainer = () => {
   return (
-    <Container size="xxl" py="xl">
-      <Stack>
-        <Title order={1}>Advanced Data Table</Title>
-        <Paper shadow="xs" p="md" withBorder>
-          <DataTable />
-        </Paper>
-      </Stack>
+    <Container fluid p={0} style={{ maxWidth: '100%', overflow: 'hidden' }}>
+      <Box py="md" px="md">
+        <DataTable />
+      </Box>
     </Container>
   );
 };
