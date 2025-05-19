@@ -159,7 +159,7 @@ const columns = [
   columnHelper.accessor('objectId', {
     header: 'שם יישות',
     cell: (info) => (
-      <Text c="grey" style={{ fontWeight: 600 }}>
+      <Text c="grey" fw={600}>
         {info.getValue()}
       </Text>
     ),
@@ -309,9 +309,7 @@ const ColumnFilter = ({ column, table }: { column: any; table: any }) => {
         </Popover.Target>
         <Popover.Dropdown>
           <Stack>
-            <Text size="sm" weight={500}>
-              Filter {column.columnDef.header}
-            </Text>
+            <Text size="sm">Filter {column.columnDef.header}</Text>
             <Select
               placeholder="Select value"
               value={columnFilterValue?.toString() || ''}
@@ -345,8 +343,8 @@ const ColumnFilter = ({ column, table }: { column: any; table: any }) => {
         </ActionIcon>
       </Popover.Target>
       <Popover.Dropdown>
-        <Stack spacing="xs">
-          <Text size="sm" weight={500}>
+        <Stack gap="xs">
+          <Text size="sm" fw={500}>
             Filter {column.columnDef.header}
           </Text>
           <TextInput
@@ -426,7 +424,7 @@ export function DataTable() {
             placeholder="Search all columns..."
             value={globalFilter ?? ''}
             onChange={(event) => setGlobalFilter(event.currentTarget.value)}
-            icon={<IconSearch size={rem(16)} />}
+            leftSection={<IconSearch size={'16px'} />}
             style={{ width: '300px' }}
           />
 
@@ -445,10 +443,10 @@ export function DataTable() {
             <Menu.Dropdown>
               <div style={{ padding: '8px 0' }}>
                 <Group justify="apart" px="md" pb="xs">
-                  <Text size="sm" weight={600}>
+                  <Text size="sm" fw={600}>
                     Column Visibility
                   </Text>
-                  <Group spacing={4}>
+                  <Group gap={4}>
                     <Button size="xs" variant="subtle" onClick={hideAllColumns}>
                       Hide all
                     </Button>
@@ -480,7 +478,7 @@ export function DataTable() {
                           e.currentTarget.style.backgroundColor = 'transparent';
                         }}
                       >
-                        <Group spacing="xs">
+                        <Group gap="xs">
                           <ActionIcon
                             size="sm"
                             variant="subtle"
@@ -524,8 +522,8 @@ export function DataTable() {
 
       {/* Active filters display */}
       {table.getState().columnFilters.length > 0 && (
-        <Group spacing="xs" mb="md">
-          <Text size="sm" weight={500}>
+        <Group gap="xs" mb="md">
+          <Text size="sm" fw={500}>
             Active filters:
           </Text>
           {table.getState().columnFilters.map((filter) => {
