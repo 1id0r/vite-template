@@ -1,14 +1,16 @@
 // Updated DataTable.tsx with severity column and row coloring
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  IconCheck,
   IconChevronDown,
   IconColumns,
-  IconEye,
-  IconEyeOff,
   IconFilter,
+  IconGripVertical,
+  IconListDetails,
   IconSearch,
 } from '@tabler/icons-react';
 import {
+  Column,
   ColumnFiltersState,
   createColumnHelper,
   FilterFn,
@@ -21,15 +23,18 @@ import {
   useReactTable,
   VisibilityState,
 } from '@tanstack/react-table';
+import { DragDropContext, Draggable, Droppable, DropResult } from 'react-beautiful-dnd';
 import {
   ActionIcon,
   Badge,
   Box,
   Button,
+  Checkbox,
   Divider,
   Group,
   Menu,
   Pagination,
+  Paper,
   Popover,
   rem,
   Select,
@@ -169,7 +174,7 @@ const columns = [
   columnHelper.accessor('description', {
     header: 'Description',
     cell: (info) => (
-      <Tooltip label={info.getValue()} multiline width={300} withArrow>
+      <Tooltip label={info.getValue()} multiline w={300} withArrow>
         <Text
           c="black"
           style={{
@@ -366,6 +371,7 @@ export function DataTable() {
   const [globalFilter, setGlobalFilter] = useState('');
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -380,8 +386,10 @@ export function DataTable() {
       columnFilters,
       columnVisibility,
       pagination,
+      columnOrder,
     },
     onPaginationChange: setPagination,
+    onColumnOrderChange: setColumnOrder,
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
@@ -395,6 +403,13 @@ export function DataTable() {
     columnResizeMode: 'onChange',
   });
 
+  useEffect(() => {
+    if (table && !columnOrder.length) {
+      const initialColumnOrder = table.getAllLeafColumns().map((column) => column.id);
+      setColumnOrder(initialColumnOrder);
+    }
+  }, [table]);
+
   // Calculate total width based on column sizes
   const totalWidth =
     table.getHeaderGroups()[0]?.headers.reduce((sum, header) => sum + header.getSize(), 0) || 0;
@@ -404,18 +419,208 @@ export function DataTable() {
     .getAllColumns()
     .filter((column) => typeof column.accessorFn !== 'undefined' && column.getCanHide());
 
-  const hideAllColumns = () => {
-    const visibilityState: VisibilityState = {};
-    allColumns.forEach((column) => {
-      visibilityState[column.id] = false;
-    });
-    setColumnVisibility(visibilityState);
-  };
-
   const showAllColumns = () => {
     setColumnVisibility({});
   };
 
+  // const hasHiddenColumns = allColumns.some((column) => !column.getIsVisible());
+
+  // Updated ColumnSelector component with fixed issues
+  const ColumnSelector = () => {
+    // Create a ref for the dropdown container
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Track if the dropdown is open
+    const [opened, setOpened] = useState(false);
+
+    // Check if any columns are hidden
+    const hasHiddenColumns = allColumns.some((column) => !column.getIsVisible());
+
+    // Handle column reordering
+    const handleColumnReorder = (result: DropResult) => {
+      if (!result.destination) return;
+
+      const items = Array.from(columnOrder);
+      const [reorderedItem] = items.splice(result.source.index, 1);
+      items.splice(result.destination.index, 0, reorderedItem);
+
+      setColumnOrder(items);
+    };
+
+    // Direct state update for column visibility
+    const toggleColumnVisibility = (columnId: string) => {
+      const newState = { ...columnVisibility };
+
+      if (columnId in newState) {
+        delete newState[columnId]; // Make visible
+      } else {
+        newState[columnId] = false; // Hide column
+      }
+
+      setColumnVisibility(newState);
+    };
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+      function handleClickOutside(event: MouseEvent) {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+          setOpened(false);
+        }
+      }
+
+      // Only add the event listener when the dropdown is open
+      if (opened) {
+        document.addEventListener('mousedown', handleClickOutside);
+      }
+
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }, [opened]);
+
+    return (
+      <div style={{ position: 'relative' }} ref={dropdownRef}>
+        <Button
+          variant="outline"
+          leftSection={<IconColumns size={16} />}
+          rightSection={<IconChevronDown size={16} />}
+          onClick={() => setOpened(!opened)}
+        >
+          עמודות
+        </Button>
+
+        {opened && (
+          <div
+            style={{
+              position: 'absolute',
+              top: 'calc(100% + 10px)',
+              left: 0,
+              width: 280,
+              backgroundColor: 'white',
+              borderRadius: 8,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+              zIndex: 100,
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{ padding: 16, backgroundColor: '#f8f9fa', borderBottom: '1px solid #e0e0e0' }}
+            >
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <Text fw={600} size="sm">
+                  הגדרות עמודות
+                </Text>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button
+                    size="xs"
+                    variant="subtle"
+                    disabled={!hasHiddenColumns}
+                    onClick={() => showAllColumns()}
+                  >
+                    אפס
+                  </Button>
+                  <Button
+                    size="xs"
+                    color="green"
+                    variant="filled"
+                    leftSection={<IconCheck size={14} />}
+                    onClick={() => setOpened(false)}
+                  >
+                    אישור
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                maxHeight: '400px',
+                overflow: 'auto',
+                direction: 'rtl',
+              }}
+            >
+              <DragDropContext onDragEnd={handleColumnReorder}>
+                <Droppable droppableId="columns">
+                  {(provided) => (
+                    <div {...provided.droppableProps} ref={provided.innerRef}>
+                      {allColumns.map((column, index) => {
+                        const isVisible = !(column.id in columnVisibility);
+                        const header =
+                          typeof column.columnDef.header === 'string'
+                            ? column.columnDef.header
+                            : column.id;
+
+                        return (
+                          <Draggable key={column.id} draggableId={column.id} index={index}>
+                            {(provided) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                style={{
+                                  padding: '12px 16px',
+                                  borderBottom: '1px solid #f0f0f0',
+                                  backgroundColor: 'white',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  ...provided.draggableProps.style,
+                                }}
+                              >
+                                <div style={{ flex: 1 }}>
+                                  <div
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      cursor: 'pointer',
+                                    }}
+                                    onClick={() => toggleColumnVisibility(column.id)}
+                                  >
+                                    <div
+                                      style={{
+                                        width: '18px',
+                                        height: '18px',
+                                        marginRight: '8px',
+                                        border: '2px solid #228be6',
+                                        borderRadius: '4px',
+                                        backgroundColor: isVisible ? '#228be6' : 'white',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'white',
+                                      }}
+                                    >
+                                      {isVisible && <IconCheck size={12} />}
+                                    </div>
+                                    <Text size="sm">{header}</Text>
+                                  </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <IconListDetails size={16} style={{ opacity: 0.5 }} />
+                                  <div {...provided.dragHandleProps}>
+                                    <IconGripVertical
+                                      size={16}
+                                      style={{ opacity: 0.5, cursor: 'grab' }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </Draggable>
+                        );
+                      })}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
   return (
     <div style={{ width: '100%' }}>
       <Group mb="md" justify="apart">
@@ -427,84 +632,7 @@ export function DataTable() {
             leftSection={<IconSearch size={'16px'} />}
             style={{ width: '300px' }}
           />
-
-          {/* Column visibility dropdown */}
-          <Menu shadow="md" width={280} position="bottom-start">
-            <Menu.Target>
-              <Button
-                variant="outline"
-                leftIcon={<IconColumns size={rem(16)} />}
-                rightIcon={<IconChevronDown size={rem(16)} />}
-              >
-                Columns
-              </Button>
-            </Menu.Target>
-
-            <Menu.Dropdown>
-              <div style={{ padding: '8px 0' }}>
-                <Group justify="apart" px="md" pb="xs">
-                  <Text size="sm" fw={600}>
-                    Column Visibility
-                  </Text>
-                  <Group gap={4}>
-                    <Button size="xs" variant="subtle" onClick={hideAllColumns}>
-                      Hide all
-                    </Button>
-                    <Button size="xs" variant="subtle" onClick={showAllColumns}>
-                      Show all
-                    </Button>
-                  </Group>
-                </Group>
-                <Divider />
-                <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                  {allColumns.map((column) => {
-                    const isVisible = column.getIsVisible();
-                    return (
-                      <div
-                        key={column.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '8px 16px',
-                          cursor: 'pointer',
-                          borderRadius: '4px',
-                        }}
-                        onClick={() => column.toggleVisibility()}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'var(--mantine-color-gray-1)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                        }}
-                      >
-                        <Group gap="xs">
-                          <ActionIcon
-                            size="sm"
-                            variant="subtle"
-                            color={isVisible ? 'blue' : 'gray'}
-                          >
-                            {isVisible ? <IconEye size={14} /> : <IconEyeOff size={14} />}
-                          </ActionIcon>
-                          <Text size="sm">
-                            {typeof column.columnDef.header === 'string'
-                              ? column.columnDef.header
-                              : column.id}
-                          </Text>
-                        </Group>
-                        <Switch
-                          checked={isVisible}
-                          onChange={() => column.toggleVisibility()}
-                          size="sm"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </Menu.Dropdown>
-          </Menu>
+          <ColumnSelector />
         </Group>
 
         <Group>
