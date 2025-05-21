@@ -104,7 +104,7 @@ export function DataTable() {
       <div
         style={{
           width: '100%',
-          border: '1px solid var(--mantine-color-gray-3)',
+          //   border: '1px solid var(--mantine-color-gray-3)',
           borderRadius: '8px',
           overflow: 'hidden',
         }}
@@ -112,16 +112,16 @@ export function DataTable() {
         <div
           style={{
             width: '100%',
-            height: '70vh',
+            height: '75vh',
             overflow: 'auto',
-            scrollbarWidth: 'none',
+            scrollbarWidth: 'thin',
             msOverflowStyle: 'none',
           }}
         >
           <Table
             striped={false}
             highlightOnHover={false}
-            withColumnBorders={false}
+            withColumnBorders={true}
             style={{
               minWidth: `${totalWidth}px`,
               marginBottom: 0,
@@ -134,7 +134,7 @@ export function DataTable() {
               style={{
                 position: 'sticky',
                 top: 0,
-                backgroundColor: 'transparent',
+                backgroundColor: 'mantine.grey.0',
                 zIndex: 10,
               }}
             >

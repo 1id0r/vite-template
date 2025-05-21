@@ -30,7 +30,6 @@ export const createColumns = () => [
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            maxWidth: '300px',
           }}
         >
           {info.getValue()}
@@ -92,7 +91,7 @@ export const createColumns = () => [
     size: 150,
   }),
   columnHelper.accessor('identities', {
-    header: 'Identities',
+    header: 'מזהים',
     cell: (info) => <Text color="black">{info.getValue()}</Text>,
     enableColumnFilter: true,
     filterFn: (row, columnId, filterValue) => {
