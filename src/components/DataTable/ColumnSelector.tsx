@@ -81,8 +81,8 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   return (
     <div style={{ position: 'relative' }} ref={dropdownRef}>
       <Button
-        variant="outline"
-        leftSection={<IconColumns size={16} />}
+        // variant="outline"
+        // leftSection={<IconColumns size={16} />}
         rightSection={<IconChevronDown size={16} />}
         onClick={() => setOpened(!opened)}
       >
