@@ -1,4 +1,4 @@
-// DataTable.tsx - Main table component (simplified)
+// DataTable.tsx - Main table component with row selection (RTL)
 import React, { useEffect, useState } from 'react';
 import {
   ColumnFiltersState,
@@ -7,6 +7,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  RowSelectionState,
   SortingState,
   useReactTable,
   VisibilityState,
@@ -26,7 +27,9 @@ export function DataTable() {
   const [globalFilter, setGlobalFilter] = useState('');
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
+  const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -43,8 +46,10 @@ export function DataTable() {
       globalFilter,
       columnFilters,
       columnVisibility,
+      rowSelection,
       pagination,
       columnOrder,
+      columnSizing,
     },
     onPaginationChange: setPagination,
     onColumnOrderChange: setColumnOrder,
@@ -52,6 +57,8 @@ export function DataTable() {
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
+    onRowSelectionChange: setRowSelection,
+    onColumnSizingChange: setColumnSizing,
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getCoreRowModel: getCoreRowModel(),
@@ -59,6 +66,9 @@ export function DataTable() {
     // Enable column resizing
     enableColumnResizing: true,
     columnResizeMode: 'onChange',
+    // Enable row selection
+    enableRowSelection: true,
+    getRowId: (row) => row.id,
   });
 
   useEffect(() => {
@@ -81,8 +91,12 @@ export function DataTable() {
     setColumnVisibility({});
   };
 
+  // Selection info
+  const selectedRowsCount = table.getFilteredSelectedRowModel().rows.length;
+  const totalFilteredRows = table.getFilteredRowModel().rows.length;
+
   return (
-    <div style={{ width: '100%' }}>
+    <div style={{ width: '100%', direction: 'rtl' }}>
       {/* Table Header */}
       <TableHeader
         globalFilter={globalFilter}
@@ -95,7 +109,18 @@ export function DataTable() {
         showAllColumns={showAllColumns}
         pageSize={pagination.pageSize}
         setPageSize={(size) => table.setPageSize(size)}
+        table={table}
+        data={data}
       />
+
+      {/* Selection Info */}
+      {selectedRowsCount > 0 && (
+        <Group mb="md" justify="flex-start">
+          <Text size="sm" fw={500} c="blue">
+            {selectedRowsCount} נבחרו מתוך {totalFilteredRows} רשומות
+          </Text>
+        </Group>
+      )}
 
       {/* Active Filters */}
       <ActiveFilters table={table} setColumnFilters={setColumnFilters} />
@@ -104,9 +129,9 @@ export function DataTable() {
       <div
         style={{
           width: '100%',
-          //   border: '1px solid var(--mantine-color-gray-3)',
           borderRadius: '8px',
           overflow: 'hidden',
+          direction: 'rtl',
         }}
       >
         <div
@@ -116,6 +141,7 @@ export function DataTable() {
             overflow: 'auto',
             scrollbarWidth: 'thin',
             msOverflowStyle: 'none',
+            direction: 'rtl',
           }}
         >
           <Table
@@ -127,6 +153,7 @@ export function DataTable() {
               marginBottom: 0,
               borderCollapse: 'separate',
               borderSpacing: '0 8px',
+              direction: 'rtl',
             }}
           >
             {/* Table Header */}
@@ -144,7 +171,7 @@ export function DataTable() {
                     <th
                       key={header.id}
                       style={{
-                        cursor: 'pointer',
+                        cursor: header.column.getCanSort() ? 'pointer' : 'default',
                         position: 'relative',
                         width: `${header.getSize()}px`,
                         minWidth: `${header.getSize()}px`,
@@ -152,13 +179,21 @@ export function DataTable() {
                         padding: '12px 16px',
                         fontWeight: 500,
                         backgroundColor: 'transparent',
-                        borderRight: '1px solid black',
+                        borderLeft: '1px solid black', // Changed from borderRight to borderLeft for RTL
                         userSelect: 'none',
-                        textAlign: 'left',
+                        textAlign: 'right', // Changed from left to right for RTL
+                        direction: 'rtl',
                       }}
                     >
-                      <Group justify="apart" wrap="nowrap">
-                        <Box onClick={header.column.getToggleSortingHandler()}>
+                      <Group justify="space-between" wrap="nowrap">
+                        <Box
+                          onClick={
+                            header.column.getCanSort()
+                              ? header.column.getToggleSortingHandler()
+                              : undefined
+                          }
+                          style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }}
+                        >
                           {flexRender(header.column.columnDef.header, header.getContext())}
                           {header.column.getIsSorted() === 'asc' && ' ↑'}
                           {header.column.getIsSorted() === 'desc' && ' ↓'}
@@ -171,11 +206,61 @@ export function DataTable() {
                       {/* Column resizer */}
                       {header.column.getCanResize() && (
                         <div
-                          onMouseDown={header.getResizeHandler()}
-                          onTouchStart={header.getResizeHandler()}
+                          onMouseDown={(e) => {
+                            // Custom resize handler for RTL
+                            const startX = e.clientX;
+                            const startSize = header.getSize();
+                            const columnId = header.column.id;
+
+                            const onMouseMove = (moveEvent: MouseEvent) => {
+                              // Invert the delta for RTL behavior
+                              const delta = startX - moveEvent.clientX; // Reversed for RTL
+                              const newSize = Math.max(50, startSize + delta); // Minimum width of 50px
+
+                              // Update column sizing state using table API
+                              table.setColumnSizing((prev) => ({
+                                ...prev,
+                                [columnId]: newSize,
+                              }));
+                            };
+
+                            const onMouseUp = () => {
+                              document.removeEventListener('mousemove', onMouseMove);
+                              document.removeEventListener('mouseup', onMouseUp);
+                            };
+
+                            document.addEventListener('mousemove', onMouseMove);
+                            document.addEventListener('mouseup', onMouseUp);
+                          }}
+                          onTouchStart={(e) => {
+                            // Custom touch handler for RTL
+                            const startX = e.touches[0].clientX;
+                            const startSize = header.getSize();
+                            const columnId = header.column.id;
+
+                            const onTouchMove = (moveEvent: TouchEvent) => {
+                              // Invert the delta for RTL behavior
+                              const delta = startX - moveEvent.touches[0].clientX; // Reversed for RTL
+                              const newSize = Math.max(50, startSize + delta); // Minimum width of 50px
+
+                              // Update column sizing state using table API
+                              table.setColumnSizing((prev) => ({
+                                ...prev,
+                                [columnId]: newSize,
+                              }));
+                            };
+
+                            const onTouchEnd = () => {
+                              document.removeEventListener('touchmove', onTouchMove);
+                              document.removeEventListener('touchend', onTouchEnd);
+                            };
+
+                            document.addEventListener('touchmove', onTouchMove);
+                            document.addEventListener('touchend', onTouchEnd);
+                          }}
                           style={{
                             position: 'absolute',
-                            right: 0,
+                            left: 0, // Changed from right to left for RTL
                             top: 0,
                             height: '100%',
                             width: '2px',
@@ -211,11 +296,15 @@ export function DataTable() {
                     style={{
                       ...rowStyle,
                       borderRadius: '8px',
+                      opacity: row.getIsSelected() ? 0.8 : 1,
+                      transform: row.getIsSelected() ? 'scale(0.99)' : 'scale(1)',
+                      transition: 'all 0.1s ease',
+                      direction: 'rtl',
                     }}
                   >
                     {row.getVisibleCells().map((cell, cellIndex) => {
-                      // First cell in the row - apply left border radius
-                      // Last cell in the row - apply right border radius
+                      // First cell in the row (rightmost in RTL) - apply right border radius
+                      // Last cell in the row (leftmost in RTL) - apply left border radius
                       const isFirstCell = cellIndex === 0;
                       const isLastCell = cellIndex === row.getVisibleCells().length - 1;
 
@@ -228,13 +317,16 @@ export function DataTable() {
                             maxWidth: `${cell.column.getSize()}px`,
                             padding: '16px',
                             backgroundColor: 'inherit',
-                            borderTopLeftRadius: isFirstCell ? '8px' : 0,
-                            borderBottomLeftRadius: isFirstCell ? '8px' : 0,
-                            borderTopRightRadius: isLastCell ? '8px' : 0,
-                            borderBottomRightRadius: isLastCell ? '8px' : 0,
+                            // RTL: First cell gets right radius, last cell gets left radius
+                            borderTopRightRadius: isFirstCell ? '8px' : 0,
+                            borderBottomRightRadius: isFirstCell ? '8px' : 0,
+                            borderTopLeftRadius: isLastCell ? '8px' : 0,
+                            borderBottomLeftRadius: isLastCell ? '8px' : 0,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
+                            textAlign: 'right', // Right align text for RTL
+                            direction: 'rtl',
                           }}
                         >
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -249,7 +341,6 @@ export function DataTable() {
         </div>
       </div>
 
-      {/* Table Pagination */}
       <TablePagination table={table} />
     </div>
   );

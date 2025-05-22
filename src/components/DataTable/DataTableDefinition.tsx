@@ -1,7 +1,7 @@
-// DataTableDefinition.tsx - Column definitions
+// DataTableDefinition.tsx - Column definitions with selection
 import React from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
-import { Text, Tooltip } from '@mantine/core';
+import { Checkbox, Text, Tooltip } from '@mantine/core';
 import { EnvironmentBadge, ImpactBadge, SeverityBadge, StatusBadge } from './Badges';
 import { DataItem } from './types';
 
@@ -10,6 +10,29 @@ const columnHelper = createColumnHelper<DataItem>();
 
 // Define columns with sizes and customizations
 export const createColumns = () => [
+  // Selection column
+  {
+    id: 'select',
+    header: ({ table }: any) => (
+      <Checkbox
+        checked={table.getIsAllRowsSelected()}
+        indeterminate={table.getIsSomeRowsSelected()}
+        onChange={table.getToggleAllRowsSelectedHandler()}
+        size="sm"
+      />
+    ),
+    cell: ({ row }: any) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        disabled={!row.getCanSelect()}
+        onChange={row.getToggleSelectedHandler()}
+        size="sm"
+      />
+    ),
+    enableSorting: false,
+    enableColumnFilter: false,
+    size: 50,
+  },
   columnHelper.accessor('objectId', {
     header: 'שם יישות',
     cell: (info) => (
