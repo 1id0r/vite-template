@@ -1,9 +1,10 @@
-// TableHeader.tsx - Table header with search, controls, and export (RTL)
+// TableHeader.tsx - Table header with search, controls, export and folders (RTL)
 import React from 'react';
 import { IconDownload, IconFileExport, IconSearch } from '@tabler/icons-react';
 import { ActionIcon, Group, Menu, Select, Text, TextInput } from '@mantine/core';
 import { ColumnSelector } from './ColumnSelector';
-import { DataItem } from './types';
+import { FolderActions } from './FolderComponents';
+import { DataItem, FolderItem } from './types';
 
 interface TableHeaderProps {
   globalFilter: string;
@@ -19,6 +20,11 @@ interface TableHeaderProps {
   // Export props
   table: any;
   data: DataItem[];
+  // Folder props
+  folders: FolderItem[];
+  hasSelectedRows: boolean;
+  onCreateFolder: () => void;
+  onAddToFolder: () => void;
 }
 
 export const TableHeader: React.FC<TableHeaderProps> = ({
@@ -34,6 +40,11 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
   setPageSize,
   table,
   data,
+  // Folder props
+  folders,
+
+  onCreateFolder,
+  onAddToFolder,
 }) => {
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const hasSelectedRows = selectedRows.length > 0;
@@ -159,6 +170,11 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
             columnOrder={columnOrder}
             setColumnOrder={setColumnOrder}
             showAllColumns={showAllColumns}
+          />
+          <FolderActions
+            onCreateFolder={onCreateFolder}
+            onAddToFolder={onAddToFolder}
+            hasSelectedRows={hasSelectedRows}
           />
         </Group>
 
