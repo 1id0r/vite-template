@@ -13,7 +13,6 @@ export const saveFolderState = (state: FolderState) => {
       expandedFolders: Array.from(state.expandedFolders),
     };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-    console.log('Saved folder state to localStorage:', stateToSave); // Debug log
   } catch (error) {
     console.error('Failed to save folder state:', error);
   }
@@ -94,7 +93,6 @@ export const createFolder = (folderState: FolderState, folderName: string): Fold
     folders: [...folderState.folders, newFolder],
   };
 
-  console.log('Creating folder:', folderName, 'New folder:', newFolder); // Debug log
   return newState;
 };
 
@@ -104,11 +102,31 @@ export const moveRowsToFolder = (
   rowIds: string[],
   folderId: string
 ): FolderState => {
+  console.log('=== MOVE ROWS TO FOLDER DEBUG ===');
+  console.log('Input rowIds:', rowIds);
+  console.log('Target folderId:', folderId);
+  console.log(
+    'Current unassigned rows:',
+    folderState.unassignedRows.map((r) => r.id)
+  );
+
   const targetFolder = folderState.folders.find((f) => f.id === folderId);
-  if (!targetFolder) return folderState;
+  console.log('Target folder found:', !!targetFolder);
+
+  if (!targetFolder) {
+    console.log('Target folder not found!');
+    return folderState;
+  }
 
   // Remove rows from unassigned and other folders
-  const newUnassignedRows = folderState.unassignedRows.filter((row) => !rowIds.includes(row.id));
+  const newUnassignedRows = folderState.unassignedRows.filter((row) => {
+    const shouldKeep = !rowIds.includes(row.id);
+    console.log(`Row ${row.id}: ${shouldKeep ? 'keeping' : 'removing'}`);
+    return shouldKeep;
+  });
+
+  console.log('New unassigned count:', newUnassignedRows.length);
+  console.log('Original unassigned count:', folderState.unassignedRows.length);
 
   const newFolders = folderState.folders.map((folder) => {
     if (folder.id === folderId) {
@@ -116,21 +134,38 @@ export const moveRowsToFolder = (
       const newRowIds = [...folder.rowIds, ...rowIds].filter(
         (id, index, arr) => arr.indexOf(id) === index // Remove duplicates
       );
+      console.log(`Target folder ${folder.name} new row count:`, newRowIds.length);
       return { ...folder, rowIds: newRowIds };
     } else {
       // Remove rows from other folders
+      const filteredRowIds = folder.rowIds.filter((id) => !rowIds.includes(id));
+      if (filteredRowIds.length !== folder.rowIds.length) {
+        console.log(
+          `Removed ${folder.rowIds.length - filteredRowIds.length} rows from folder ${folder.name}`
+        );
+      }
       return {
         ...folder,
-        rowIds: folder.rowIds.filter((id) => !rowIds.includes(id)),
+        rowIds: filteredRowIds,
       };
     }
   });
 
-  return {
+  const result = {
     ...folderState,
     folders: newFolders,
     unassignedRows: newUnassignedRows,
   };
+
+  console.log('=== MOVE RESULT ===');
+  console.log(
+    'Final result folders:',
+    result.folders.map((f) => ({ name: f.name, count: f.rowIds.length }))
+  );
+  console.log('Final unassigned count:', result.unassignedRows.length);
+  console.log('=== END MOVE DEBUG ===');
+
+  return result;
 };
 
 // Toggle folder expansion

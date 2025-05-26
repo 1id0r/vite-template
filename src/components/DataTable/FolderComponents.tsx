@@ -221,9 +221,7 @@ export const FolderActions: React.FC<FolderActionsProps> = ({
   return (
     <Menu shadow="md" width={200}>
       <Menu.Target>
-        <Button leftSection={<IconFolderPlus size={16} />} variant="outline" size="sm">
-          תיקיות
-        </Button>
+        <Button leftSection={<IconFolderPlus size={16} />} variant="subtle" size="sm"></Button>
       </Menu.Target>
       <Menu.Dropdown>
         <Menu.Label>פעולות תיקיות</Menu.Label>

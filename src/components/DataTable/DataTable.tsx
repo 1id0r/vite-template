@@ -1,5 +1,5 @@
-// DataTable.tsx - Main table component with folders and RTL support
-import React, { useEffect, useState } from 'react';
+// DataTable.tsx - Proper Virtual Scrolling for 500+ rows
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ColumnFiltersState,
   createColumnHelper,
@@ -13,7 +13,8 @@ import {
   useReactTable,
   VisibilityState,
 } from '@tanstack/react-table';
-import { Box, Checkbox, Group, Table, Text, Tooltip } from '@mantine/core';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { Box, Checkbox, Group, Text, Tooltip } from '@mantine/core';
 import { ActiveFilters } from './ActiveFilters';
 import { EnvironmentBadge, ImpactBadge, SeverityBadge, StatusBadge } from './Badges';
 import { ColumnFilter } from './ColumnFilter';
@@ -31,9 +32,9 @@ import {
 } from './FolderUtils';
 import { generateMockData } from './mockData';
 import { TableHeader } from './TableHeader';
-import { TablePagination } from './TablePagination';
 import {
   DataItem,
+  FolderItem,
   FolderState,
   getFolderRowStyle,
   getRowStyleBySeverity,
@@ -42,20 +43,16 @@ import {
 } from './types';
 
 export function DataTable() {
-  // Original data
   const [originalData] = useState<DataItem[]>(() => generateMockData());
 
-  // Folder state
   const [folderState, setFolderState] = useState<FolderState>(() => {
     const saved = loadFolderState();
     return saved || createInitialFolderState(originalData);
   });
 
-  // Table display data
   const [displayData, setDisplayData] = useState<TableRow[]>([]);
-  const [tableVersion, setTableVersion] = useState(0); // Force re-render counter
+  const [tableVersion, setTableVersion] = useState(0);
 
-  // Table states
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -65,229 +62,240 @@ export function DataTable() {
   const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
   const [pagination, setPagination] = useState({
     pageIndex: 0,
-    pageSize: 10,
+    pageSize: 1000,
   });
 
-  // Modal states
   const [createFolderModalOpen, setCreateFolderModalOpen] = useState(false);
   const [addToFolderModalOpen, setAddToFolderModalOpen] = useState(false);
 
-  // Update display data when folder state changes
-  useEffect(() => {
-    const rows = generateTableRows(folderState, originalData);
-    console.log(
-      'Updating display data:',
-      rows.length,
-      'rows',
-      'folders:',
-      folderState.folders.length
-    );
-    // Force a new array reference to trigger re-render
-    setDisplayData([...rows]);
-  }, [folderState, originalData]);
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
-  // Save folder state to localStorage whenever it changes
+  const memoizedDisplayData = useMemo(
+    () => generateTableRows(folderState, originalData),
+    [folderState, originalData]
+  );
+
   useEffect(() => {
-    saveFolderState(folderState);
+    setDisplayData(memoizedDisplayData);
+  }, [memoizedDisplayData]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => saveFolderState(folderState), 300);
+    return () => clearTimeout(timeoutId);
   }, [folderState]);
 
-  // Create columns helper
-  const columnHelper = createColumnHelper<TableRow>();
+  const columnHelper = useMemo(() => createColumnHelper<TableRow>(), []);
 
-  // Create columns inline to handle TableRow type
-  const columns = [
-    // Selection column
-    {
-      id: 'select',
-      header: ({ table }: any) => (
-        <Checkbox
-          checked={table.getIsAllRowsSelected()}
-          indeterminate={table.getIsSomeRowsSelected()}
-          onChange={table.getToggleAllRowsSelectedHandler()}
-          size="sm"
-        />
-      ),
-      cell: ({ row }: any) => {
-        if (isFolder(row.original)) return null; // No checkbox for folders
-        return (
-          <Checkbox
-            checked={row.getIsSelected()}
-            disabled={!row.getCanSelect()}
-            onChange={row.getToggleSelectedHandler()}
-            size="sm"
-          />
-        );
-      },
-      enableSorting: false,
-      enableColumnFilter: false,
-      size: 50,
-    },
-    columnHelper.accessor((row) => (isFolder(row) ? '' : row.objectId), {
-      id: 'objectId',
-      header: 'שם יישות',
-      cell: (info) => {
-        if (isFolder(info.row.original)) return null;
-        return (
-          <Text c="grey" fw={600}>
-            {info.getValue()}
-          </Text>
-        );
-      },
-      enableColumnFilter: true,
-      size: 150,
-    }),
-    columnHelper.accessor((row) => (isFolder(row) ? '' : row.description), {
-      id: 'description',
-      header: 'תיאור',
-      cell: (info) => {
-        if (isFolder(info.row.original)) return null;
-        return (
-          <Tooltip label={info.getValue()} multiline w={300} withArrow>
-            <Text
-              c="black"
-              style={{
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
+  const columns = useMemo(
+    () => [
+      {
+        id: 'select',
+        header: ({ table }: any) => {
+          const dataRows = table
+            .getFilteredRowModel()
+            .rows.filter((row: any) => !isFolder(row.original));
+          const isAllDataRowsSelected =
+            dataRows.length > 0 && dataRows.every((row: any) => row.getIsSelected());
+          const isSomeDataRowsSelected = dataRows.some((row: any) => row.getIsSelected());
+
+          return (
+            <Checkbox
+              checked={isAllDataRowsSelected}
+              indeterminate={isSomeDataRowsSelected && !isAllDataRowsSelected}
+              onChange={(event) => {
+                dataRows.forEach((row: any) => {
+                  row.toggleSelected(event.currentTarget.checked);
+                });
               }}
-            >
+              size="sm"
+            />
+          );
+        },
+        cell: ({ row }: any) => {
+          if (isFolder(row.original)) return null;
+          return (
+            <Checkbox
+              checked={row.getIsSelected()}
+              disabled={!row.getCanSelect()}
+              onChange={row.getToggleSelectedHandler()}
+              size="sm"
+            />
+          );
+        },
+        enableSorting: false,
+        enableColumnFilter: false,
+        size: 50,
+      },
+      columnHelper.accessor((row) => (isFolder(row) ? '' : row.objectId), {
+        id: 'objectId',
+        header: 'שם יישות',
+        cell: (info) => {
+          if (isFolder(info.row.original)) return null;
+          return (
+            <Text c="grey" fw={600}>
               {info.getValue()}
             </Text>
-          </Tooltip>
-        );
-      },
-      enableColumnFilter: true,
-      size: 300,
-    }),
-    columnHelper.accessor((row) => (isFolder(row) ? '' : row.hierarchy), {
-      id: 'hierarchy',
-      header: 'היררכיה',
-      cell: (info) => {
-        if (isFolder(info.row.original)) return null;
-        return <Text color="black">{info.getValue()}</Text>;
-      },
-      enableColumnFilter: true,
-      size: 250,
-    }),
-    columnHelper.accessor((row) => (isFolder(row) ? '' : row.lastUpdated), {
-      id: 'lastUpdated',
-      header: 'עודכן לאחרונה',
-      cell: (info) => {
-        if (isFolder(info.row.original)) return null;
-        return <Text color="black">{info.getValue()}</Text>;
-      },
-      enableColumnFilter: true,
-      size: 150,
-    }),
-    columnHelper.accessor((row) => (isFolder(row) ? '' : row.startTime), {
-      id: 'startTime',
-      header: 'זמן התחלה',
-      cell: (info) => {
-        if (isFolder(info.row.original)) return null;
-        return <Text color="black">{info.getValue()}</Text>;
-      },
-      enableColumnFilter: true,
-      size: 150,
-    }),
-    columnHelper.accessor((row) => (isFolder(row) ? '' : row.status), {
-      id: 'status',
-      header: 'סטטוס',
-      cell: (info) => {
-        if (isFolder(info.row.original)) return null;
-        return <StatusBadge status={info.getValue() as DataItem['status']} />;
-      },
-      enableColumnFilter: true,
-      filterFn: (row, columnId, filterValue) => {
-        if (!filterValue || isFolder(row.original)) return true;
-        const status = (row.original as DataItem).status;
-        return status === filterValue;
-      },
-      size: 120,
-    }),
-    columnHelper.accessor((row) => (isFolder(row) ? '' : row.impact), {
-      id: 'impact',
-      header: 'אימפקט עסקי',
-      cell: (info) => {
-        if (isFolder(info.row.original)) return null;
-        return <ImpactBadge impact={info.getValue() as DataItem['impact']} />;
-      },
-      enableColumnFilter: true,
-      filterFn: (row, columnId, filterValue) => {
-        if (!filterValue || isFolder(row.original)) return true;
-        const impact = (row.original as DataItem).impact;
-        return impact === filterValue;
-      },
-      size: 120,
-    }),
-    columnHelper.accessor((row) => (isFolder(row) ? '' : row.environment), {
-      id: 'environment',
-      header: 'סביבה',
-      cell: (info) => {
-        if (isFolder(info.row.original)) return null;
-        return <EnvironmentBadge environment={info.getValue() as DataItem['environment']} />;
-      },
-      enableColumnFilter: true,
-      filterFn: (row, columnId, filterValue) => {
-        if (!filterValue || isFolder(row.original)) return true;
-        const environment = (row.original as DataItem).environment;
-        return environment === filterValue;
-      },
-      size: 150,
-    }),
-    columnHelper.accessor((row) => (isFolder(row) ? '' : row.origin), {
-      id: 'origin',
-      header: 'מקור התראה',
-      cell: (info) => {
-        if (isFolder(info.row.original)) return null;
-        return <Text color="black">{info.getValue()}</Text>;
-      },
-      enableColumnFilter: true,
-      size: 120,
-    }),
-    columnHelper.accessor((row) => (isFolder(row) ? '' : row.snId), {
-      id: 'snId',
-      header: 'SN מזהה',
-      cell: (info) => {
-        if (isFolder(info.row.original)) return null;
-        return <Text color="black">{info.getValue()}</Text>;
-      },
-      enableColumnFilter: true,
-      size: 150,
-    }),
-    columnHelper.accessor((row) => (isFolder(row) ? '' : row.identities), {
-      id: 'identities',
-      header: 'מזהים',
-      cell: (info) => {
-        if (isFolder(info.row.original)) return null;
-        const identities = info.getValue() as string[];
-        return <Text color="black">{identities?.join(', ') || ''}</Text>;
-      },
-      enableColumnFilter: true,
-      filterFn: (row, columnId, filterValue) => {
-        if (!filterValue || isFolder(row.original)) return true;
-        const identities = (row.original as DataItem).identities;
-        return identities.some((identity) =>
-          identity.toLowerCase().includes(filterValue.toLowerCase())
-        );
-      },
-      size: 250,
-    }),
-    columnHelper.accessor((row) => (isFolder(row) ? '' : row.severity), {
-      id: 'severity',
-      header: 'חומרה',
-      cell: (info) => {
-        if (isFolder(info.row.original)) return null;
-        return <SeverityBadge severity={info.getValue() as DataItem['severity']} />;
-      },
-      enableColumnFilter: true,
-      filterFn: (row, columnId, filterValue) => {
-        if (!filterValue || isFolder(row.original)) return true;
-        const severity = (row.original as DataItem).severity;
-        return severity === filterValue;
-      },
-      size: 120,
-    }),
-  ];
+          );
+        },
+        enableColumnFilter: true,
+        enableHiding: false,
+        size: 150,
+      }),
+      columnHelper.accessor((row) => (isFolder(row) ? '' : row.description), {
+        id: 'description',
+        header: 'תיאור',
+        cell: (info) => {
+          if (isFolder(info.row.original)) return null;
+          return (
+            <Tooltip label={info.getValue()} multiline w={300} withArrow>
+              <Text
+                c="black"
+                style={{
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {info.getValue()}
+              </Text>
+            </Tooltip>
+          );
+        },
+        enableColumnFilter: true,
+        enableHiding: false,
+        size: 300,
+      }),
+      columnHelper.accessor((row) => (isFolder(row) ? '' : row.hierarchy), {
+        id: 'hierarchy',
+        header: 'היררכיה',
+        cell: (info) => {
+          if (isFolder(info.row.original)) return null;
+          return <Text color="black">{info.getValue()}</Text>;
+        },
+        enableColumnFilter: true,
+        size: 250,
+      }),
+      columnHelper.accessor((row) => (isFolder(row) ? '' : row.lastUpdated), {
+        id: 'lastUpdated',
+        header: 'עודכן לאחרונה',
+        cell: (info) => {
+          if (isFolder(info.row.original)) return null;
+          return <Text color="black">{info.getValue()}</Text>;
+        },
+        enableColumnFilter: true,
+        size: 150,
+      }),
+      columnHelper.accessor((row) => (isFolder(row) ? '' : row.startTime), {
+        id: 'startTime',
+        header: 'זמן התחלה',
+        cell: (info) => {
+          if (isFolder(info.row.original)) return null;
+          return <Text color="black">{info.getValue()}</Text>;
+        },
+        enableColumnFilter: true,
+        size: 150,
+      }),
+      columnHelper.accessor((row) => (isFolder(row) ? '' : row.status), {
+        id: 'status',
+        header: 'סטטוס',
+        cell: (info) => {
+          if (isFolder(info.row.original)) return null;
+          return <StatusBadge status={info.getValue() as DataItem['status']} />;
+        },
+        enableColumnFilter: true,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue || isFolder(row.original)) return true;
+          const status = (row.original as DataItem).status;
+          return status === filterValue;
+        },
+        size: 120,
+      }),
+      columnHelper.accessor((row) => (isFolder(row) ? '' : row.impact), {
+        id: 'impact',
+        header: 'אימפקט עסקי',
+        cell: (info) => {
+          if (isFolder(info.row.original)) return null;
+          return <ImpactBadge impact={info.getValue() as DataItem['impact']} />;
+        },
+        enableColumnFilter: true,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue || isFolder(row.original)) return true;
+          const impact = (row.original as DataItem).impact;
+          return impact === filterValue;
+        },
+        size: 120,
+      }),
+      columnHelper.accessor((row) => (isFolder(row) ? '' : row.environment), {
+        id: 'environment',
+        header: 'סביבה',
+        cell: (info) => {
+          if (isFolder(info.row.original)) return null;
+          return <EnvironmentBadge environment={info.getValue() as DataItem['environment']} />;
+        },
+        enableColumnFilter: true,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue || isFolder(row.original)) return true;
+          const environment = (row.original as DataItem).environment;
+          return environment === filterValue;
+        },
+        size: 150,
+      }),
+      columnHelper.accessor((row) => (isFolder(row) ? '' : row.origin), {
+        id: 'origin',
+        header: 'מקור התראה',
+        cell: (info) => {
+          if (isFolder(info.row.original)) return null;
+          return <Text color="black">{info.getValue()}</Text>;
+        },
+        enableColumnFilter: true,
+        size: 120,
+      }),
+      columnHelper.accessor((row) => (isFolder(row) ? '' : row.snId), {
+        id: 'snId',
+        header: 'SN מזהה',
+        cell: (info) => {
+          if (isFolder(info.row.original)) return null;
+          return <Text color="black">{info.getValue()}</Text>;
+        },
+        enableColumnFilter: true,
+        size: 150,
+      }),
+      columnHelper.accessor((row) => (isFolder(row) ? '' : row.identities), {
+        id: 'identities',
+        header: 'מזהים',
+        cell: (info) => {
+          if (isFolder(info.row.original)) return null;
+          const identities = info.getValue() as string[];
+          return <Text color="black">{identities?.join(', ') || ''}</Text>;
+        },
+        enableColumnFilter: true,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue || isFolder(row.original)) return true;
+          const identities = (row.original as DataItem).identities;
+          return identities.some((identity) =>
+            identity.toLowerCase().includes(filterValue.toLowerCase())
+          );
+        },
+        size: 250,
+      }),
+      columnHelper.accessor((row) => (isFolder(row) ? '' : row.severity), {
+        id: 'severity',
+        header: 'חומרה',
+        cell: (info) => {
+          if (isFolder(info.row.original)) return null;
+          return <SeverityBadge severity={info.getValue() as DataItem['severity']} />;
+        },
+        enableColumnFilter: true,
+        filterFn: (row, columnId, filterValue) => {
+          if (!filterValue || isFolder(row.original)) return true;
+          const severity = (row.original as DataItem).severity;
+          return severity === filterValue;
+        },
+        size: 120,
+      }),
+    ],
+    [columnHelper]
+  );
 
   const table = useReactTable<TableRow>({
     data: displayData,
@@ -298,11 +306,9 @@ export function DataTable() {
       columnFilters,
       columnVisibility,
       rowSelection,
-      pagination,
       columnOrder,
       columnSizing,
     },
-    onPaginationChange: setPagination,
     onColumnOrderChange: setColumnOrder,
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
@@ -313,16 +319,24 @@ export function DataTable() {
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    // Enable column resizing
     enableColumnResizing: true,
     columnResizeMode: 'onChange',
-    // Enable row selection
-    enableRowSelection: (row) => !isFolder(row.original), // Only allow data rows to be selected
+    enableRowSelection: (row) => !isFolder(row.original),
     getRowId: (row) => row.id,
-    // Force table to update when data changes
     autoResetPageIndex: false,
-    manualPagination: false,
+  });
+
+  const tableRows = table.getRowModel().rows;
+
+  const rowVirtualizer = useVirtualizer({
+    count: tableRows.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: useCallback(() => 76, []),
+    overscan: 5,
+    measureElement:
+      typeof window !== 'undefined' && navigator.userAgent.indexOf('Firefox') === -1
+        ? (element) => element?.getBoundingClientRect().height
+        : undefined,
   });
 
   useEffect(() => {
@@ -332,65 +346,78 @@ export function DataTable() {
     }
   }, [table, columnOrder.length]);
 
-  // Calculate total width based on column sizes
-  const totalWidth =
-    table.getHeaderGroups()[0]?.headers.reduce((sum, header) => sum + header.getSize(), 0) || 0;
+  const totalWidth = useMemo(
+    () =>
+      table.getHeaderGroups()[0]?.headers.reduce((sum, header) => sum + header.getSize(), 0) || 0,
+    [table]
+  );
 
-  // Column visibility controls
-  const allColumns = table
-    .getAllColumns()
-    .filter((column) => typeof column.accessorFn !== 'undefined' && column.getCanHide());
+  const allColumns = useMemo(
+    () =>
+      table.getAllColumns().filter((column) => {
+        return (
+          typeof column.accessorFn !== 'undefined' &&
+          column.getCanHide() &&
+          column.id !== 'objectId' &&
+          column.id !== 'description'
+        );
+      }),
+    [table]
+  );
 
-  const showAllColumns = () => {
+  const showAllColumns = useCallback(() => {
     setColumnVisibility({});
-  };
+  }, []);
 
-  // Selection info
-  const selectedRowsCount = table.getFilteredSelectedRowModel().rows.length;
-  const totalFilteredRows = table.getFilteredRowModel().rows.length;
-  const selectedRowIds = table.getFilteredSelectedRowModel().rows.map((row) => row.original.id);
+  const selectionInfo = useMemo(() => {
+    const allRows = table.getRowModel().rows;
+    const dataRows = allRows.filter((row) => !isFolder(row.original));
+    const selectedDataRows = dataRows.filter((row) => row.getIsSelected());
 
-  // Folder operations
-  const handleCreateFolder = (folderName: string) => {
-    console.log('Creating folder:', folderName);
+    const selectedRowsCount = selectedDataRows.length;
+    const totalFilteredRows = table
+      .getFilteredRowModel()
+      .rows.filter((row) => !isFolder(row.original)).length;
+    const selectedRowIds = selectedDataRows.map((row) => row.original.id);
+
+    return { selectedRowsCount, totalFilteredRows, selectedRowIds };
+  }, [table, rowSelection]);
+
+  const handleCreateFolder = useCallback((folderName: string) => {
     setFolderState((prev) => {
       const newState = createFolder(prev, folderName);
-      console.log(
-        'Previous folders:',
-        prev.folders.length,
-        'New folders:',
-        newState.folders.length
-      );
-      // Force table re-render
       setTableVersion((v) => v + 1);
-      // Force immediate localStorage save
-      setTimeout(() => saveFolderState(newState), 0);
       return newState;
     });
-  };
+  }, []);
 
-  const handleAddToFolder = (folderId: string) => {
-    if (selectedRowIds.length > 0) {
-      setFolderState((prev) => moveRowsToFolder(prev, selectedRowIds, folderId));
-      setRowSelection({}); // Clear selection after moving
-    }
-  };
+  const handleAddToFolder = useCallback(
+    (folderId: string) => {
+      if (selectionInfo.selectedRowIds.length > 0) {
+        setFolderState((prev) => moveRowsToFolder(prev, selectionInfo.selectedRowIds, folderId));
+        setRowSelection({});
+      }
+    },
+    [selectionInfo.selectedRowIds]
+  );
 
-  const handleToggleFolderExpansion = (folderId: string) => {
+  const handleToggleFolderExpansion = useCallback((folderId: string) => {
     setFolderState((prev) => toggleFolderExpansion(prev, folderId));
-  };
+  }, []);
 
-  const handleRenameFolder = (folderId: string, newName: string) => {
+  const handleRenameFolder = useCallback((folderId: string, newName: string) => {
     setFolderState((prev) => renameFolder(prev, folderId, newName));
-  };
+  }, []);
 
-  const handleDeleteFolder = (folderId: string) => {
-    setFolderState((prev) => deleteFolder(prev, folderId, originalData));
-  };
+  const handleDeleteFolder = useCallback(
+    (folderId: string) => {
+      setFolderState((prev) => deleteFolder(prev, folderId, originalData));
+    },
+    [originalData]
+  );
 
   return (
     <div style={{ width: '100%', direction: 'rtl' }}>
-      {/* Table Header */}
       <TableHeader
         globalFilter={globalFilter}
         setGlobalFilter={setGlobalFilter}
@@ -404,26 +431,22 @@ export function DataTable() {
         setPageSize={(size) => table.setPageSize(size)}
         table={table}
         data={originalData}
-        // Folder props
         folders={folderState.folders}
-        hasSelectedRows={selectedRowsCount > 0}
+        hasSelectedRows={selectionInfo.selectedRowsCount > 0}
         onCreateFolder={() => setCreateFolderModalOpen(true)}
         onAddToFolder={() => setAddToFolderModalOpen(true)}
       />
 
-      {/* Selection Info */}
-      {selectedRowsCount > 0 && (
+      {selectionInfo.selectedRowsCount > 0 && (
         <Group mb="md" justify="flex-start">
           <Text size="sm" fw={500} c="blue">
-            {selectedRowsCount} נבחרו מתוך {totalFilteredRows} רשומות
+            {selectionInfo.selectedRowsCount} נבחרו מתוך {selectionInfo.totalFilteredRows} רשומות
           </Text>
         </Group>
       )}
 
-      {/* Active Filters */}
       <ActiveFilters table={table} setColumnFilters={setColumnFilters} />
 
-      {/* Table Container */}
       <div
         style={{
           width: '100%',
@@ -433,181 +456,183 @@ export function DataTable() {
         }}
       >
         <div
+          ref={tableContainerRef}
           style={{
             width: '100%',
             height: '75vh',
             overflow: 'auto',
-            scrollbarWidth: 'thin',
-            msOverflowStyle: 'none',
             direction: 'rtl',
+            contain: 'strict',
+            willChange: 'scroll-position',
           }}
         >
-          <Table
-            key={`table-${tableVersion}`} // Force re-render when version changes
-            striped={false}
-            highlightOnHover={false}
-            withColumnBorders={true}
+          <div
             style={{
+              position: 'sticky',
+              top: 0,
+              backgroundColor: 'white',
+              zIndex: 10,
               minWidth: `${totalWidth}px`,
-              marginBottom: 0,
-              borderCollapse: 'separate',
-              borderSpacing: '0 8px',
-              direction: 'rtl',
+              borderBottom: '1px solid #e9ecef',
             }}
           >
-            {/* Table Header */}
-            <thead
-              style={{
-                position: 'sticky',
-                top: 0,
-                backgroundColor: 'mantine.grey.0',
-                zIndex: 10,
-              }}
-            >
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <th
-                      key={header.id}
+            {table.getHeaderGroups().map((headerGroup) => (
+              <div
+                key={headerGroup.id}
+                style={{
+                  display: 'flex',
+                  direction: 'rtl',
+                }}
+              >
+                {headerGroup.headers.map((header) => (
+                  <div
+                    key={header.id}
+                    style={{
+                      cursor: header.column.getCanSort() ? 'pointer' : 'default',
+                      position: 'relative',
+                      width: `${header.getSize()}px`,
+                      minWidth: `${header.getSize()}px`,
+                      maxWidth: `${header.getSize()}px`,
+                      padding: '12px 16px',
+                      fontWeight: 500,
+                      backgroundColor: 'white',
+                      borderLeft: 'none',
+                      userSelect: 'none',
+                      textAlign: 'right',
+                      direction: 'rtl',
+                      transition: 'background-color 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = '#f8f9fa';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'white';
+                    }}
+                  >
+                    <Box
+                      onClick={
+                        header.column.getCanSort()
+                          ? header.column.getToggleSortingHandler()
+                          : undefined
+                      }
                       style={{
                         cursor: header.column.getCanSort() ? 'pointer' : 'default',
-                        position: 'relative',
-                        width: `${header.getSize()}px`,
-                        minWidth: `${header.getSize()}px`,
-                        maxWidth: `${header.getSize()}px`,
-                        padding: '12px 16px',
-                        fontWeight: 500,
-                        backgroundColor: 'transparent',
-                        // Remove border but add subtle separator on hover
-                        borderLeft: 'none',
-                        userSelect: 'none',
-                        textAlign: 'right',
-                        direction: 'rtl',
-                        // Add hover effect to show it's interactive
-                        transition: 'background-color 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#f8f9fa';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = 'transparent';
+                        flex: 1,
+                        minWidth: 0,
                       }}
                     >
-                      <Group justify="space-between" wrap="nowrap">
-                        <Box
-                          onClick={
-                            header.column.getCanSort()
-                              ? header.column.getToggleSortingHandler()
-                              : undefined
-                          }
-                          style={{ cursor: header.column.getCanSort() ? 'pointer' : 'default' }}
-                        >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {header.column.getIsSorted() === 'asc' && ' ↑'}
-                          {header.column.getIsSorted() === 'desc' && ' ↓'}
-                        </Box>
-                        {header.column.getCanFilter() && (
-                          <ColumnFilter column={header.column} table={table} />
-                        )}
-                      </Group>
-
-                      {/* Column resizer */}
-                      {header.column.getCanResize() && (
-                        <div
-                          onMouseDown={(e) => {
-                            // Custom resize handler for RTL
-                            const startX = e.clientX;
-                            const startSize = header.getSize();
-                            const columnId = header.column.id;
-
-                            const onMouseMove = (moveEvent: MouseEvent) => {
-                              // Invert the delta for RTL behavior
-                              const delta = startX - moveEvent.clientX;
-                              const newSize = Math.max(50, startSize + delta);
-
-                              table.setColumnSizing((prev) => ({
-                                ...prev,
-                                [columnId]: newSize,
-                              }));
-                            };
-
-                            const onMouseUp = () => {
-                              document.removeEventListener('mousemove', onMouseMove);
-                              document.removeEventListener('mouseup', onMouseUp);
-                            };
-
-                            document.addEventListener('mousemove', onMouseMove);
-                            document.addEventListener('mouseup', onMouseUp);
-                          }}
-                          onTouchStart={(e) => {
-                            // Custom touch handler for RTL
-                            const startX = e.touches[0].clientX;
-                            const startSize = header.getSize();
-                            const columnId = header.column.id;
-
-                            const onTouchMove = (moveEvent: TouchEvent) => {
-                              // Invert the delta for RTL behavior
-                              const delta = startX - moveEvent.touches[0].clientX;
-                              const newSize = Math.max(50, startSize + delta);
-
-                              table.setColumnSizing((prev) => ({
-                                ...prev,
-                                [columnId]: newSize,
-                              }));
-                            };
-
-                            const onTouchEnd = () => {
-                              document.removeEventListener('touchmove', onTouchMove);
-                              document.removeEventListener('touchend', onTouchEnd);
-                            };
-
-                            document.addEventListener('touchmove', onTouchMove);
-                            document.addEventListener('touchend', onTouchEnd);
-                          }}
-                          style={{
-                            position: 'absolute',
-                            left: 0,
-                            top: 0,
-                            height: '100%',
-                            width: '2px',
-                            background: 'transparent',
-                            cursor: 'col-resize',
-                            userSelect: 'none',
-                            touchAction: 'none',
-                            color: 'black',
-                            zIndex: 1,
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.background = 'grey';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'transparent';
-                          }}
-                        />
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {header.column.getIsSorted() === 'asc' && ' ↑'}
+                      {header.column.getIsSorted() === 'desc' && ' ↓'}
+                    </Box>
+                    <div style={{ flexShrink: 0 }}>
+                      {header.column.getCanFilter() && (
+                        <ColumnFilter column={header.column} table={table} />
                       )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            {/* Table Body */}
-            <tbody>
-              {table.getRowModel().rows.map((row) => {
-                const isRowFolder = isFolder(row.original);
-                const rowStyle = isRowFolder
-                  ? getFolderRowStyle()
-                  : getRowStyleBySeverity((row.original as DataItem).severity);
+                    </div>
 
-                // For folder rows, render special folder content
-                if (isRowFolder) {
-                  const folder = row.original;
-                  const isExpanded = folderState.expandedFolders.has(folder.id);
+                    {header.column.getCanResize() && (
+                      <div
+                        onMouseDown={(e) => {
+                          const startX = e.clientX;
+                          const startSize = header.getSize();
+                          const columnId = header.column.id;
 
-                  return (
-                    <tr key={row.id} style={{ ...rowStyle, borderRadius: '8px' }}>
-                      <td
-                        colSpan={row.getVisibleCells().length}
+                          const onMouseMove = (moveEvent: MouseEvent) => {
+                            const delta = startX - moveEvent.clientX;
+                            const newSize = Math.max(50, startSize + delta);
+                            table.setColumnSizing((prev) => ({
+                              ...prev,
+                              [columnId]: newSize,
+                            }));
+                          };
+
+                          const onMouseUp = () => {
+                            document.removeEventListener('mousemove', onMouseMove);
+                            document.removeEventListener('mouseup', onMouseUp);
+                          };
+
+                          document.addEventListener('mousemove', onMouseMove);
+                          document.addEventListener('mouseup', onMouseUp);
+                        }}
                         style={{
+                          position: 'absolute',
+                          left: '-2px',
+                          top: 0,
+                          height: '100%',
+                          width: '4px',
+                          background: 'transparent',
+                          cursor: 'col-resize',
+                          userSelect: 'none',
+                          touchAction: 'none',
+                          zIndex: 1,
+                          borderLeft: '2px solid transparent',
+                          transition: 'border-color 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderLeft = '2px solid #228be6';
+                          e.currentTarget.style.background = 'rgba(34, 139, 230, 0.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderLeft = '2px solid transparent';
+                          e.currentTarget.style.background = 'transparent';
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              width: '100%',
+              position: 'relative',
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const row = tableRows[virtualRow.index];
+              const isRowFolder = isFolder(row.original);
+              const rowStyle = isRowFolder
+                ? getFolderRowStyle()
+                : getRowStyleBySeverity((row.original as DataItem).severity);
+
+              return (
+                <div
+                  key={row.id}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: `${virtualRow.size}px`,
+                    display: 'flex',
+                    direction: 'rtl',
+                    paddingBottom: '8px',
+                    transform: `translateY(${virtualRow.start}px) ${row.getIsSelected() ? 'scale(0.99)' : 'scale(1)'}`,
+                    transition: 'opacity 0.1s ease, transform 0.1s ease',
+                  }}
+                >
+                  <div
+                    style={{
+                      width: '100%',
+                      height: 'calc(100% - 8px)',
+                      display: 'flex',
+                      direction: 'rtl',
+                      ...rowStyle,
+                      borderRadius: '8px',
+                      opacity: row.getIsSelected() ? 0.8 : 1,
+                    }}
+                  >
+                    {isRowFolder ? (
+                      <div
+                        style={{
+                          width: '100%',
                           padding: '16px',
                           backgroundColor: 'inherit',
                           borderRadius: '8px',
@@ -616,73 +641,63 @@ export function DataTable() {
                         }}
                       >
                         <FolderRow
-                          folder={folder}
-                          isExpanded={isExpanded}
+                          folder={row.original as FolderItem}
+                          isExpanded={folderState.expandedFolders.has(
+                            (row.original as FolderItem).id
+                          )}
                           onToggleExpansion={handleToggleFolderExpansion}
                           onRename={handleRenameFolder}
                           onDelete={handleDeleteFolder}
                         />
-                      </td>
-                    </tr>
-                  );
-                }
+                      </div>
+                    ) : (
+                      row.getVisibleCells().map((cell, cellIndex) => {
+                        const isFirstCell = cellIndex === 0;
+                        const isLastCell = cellIndex === row.getVisibleCells().length - 1;
 
-                // Regular data row
-                return (
-                  <tr
-                    key={row.id}
-                    style={{
-                      ...rowStyle,
-                      borderRadius: '8px',
-                      opacity: row.getIsSelected() ? 0.8 : 1,
-                      transform: row.getIsSelected() ? 'scale(0.99)' : 'scale(1)',
-                      transition: 'all 0.1s ease',
-                      direction: 'rtl',
-                      // Add indentation for rows inside folders
-                      paddingLeft: (row.original as any).isInFolder ? '20px' : '0',
-                    }}
-                  >
-                    {row.getVisibleCells().map((cell, cellIndex) => {
-                      const isFirstCell = cellIndex === 0;
-                      const isLastCell = cellIndex === row.getVisibleCells().length - 1;
-
-                      return (
-                        <td
-                          key={cell.id}
-                          style={{
-                            width: `${cell.column.getSize()}px`,
-                            minWidth: `${cell.column.getSize()}px`,
-                            maxWidth: `${cell.column.getSize()}px`,
-                            padding: '16px',
-                            paddingRight:
-                              (row.original as any).isInFolder && isFirstCell ? '40px' : '16px',
-                            backgroundColor: 'inherit',
-                            borderTopRightRadius: isFirstCell ? '8px' : 0,
-                            borderBottomRightRadius: isFirstCell ? '8px' : 0,
-                            borderTopLeftRadius: isLastCell ? '8px' : 0,
-                            borderBottomLeftRadius: isLastCell ? '8px' : 0,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            textAlign: 'right',
-                            direction: 'rtl',
-                          }}
-                        >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </Table>
+                        return (
+                          <div
+                            key={cell.id}
+                            style={{
+                              width: `${cell.column.getSize()}px`,
+                              minWidth: `${cell.column.getSize()}px`,
+                              maxWidth: `${cell.column.getSize()}px`,
+                              padding: '16px',
+                              paddingRight:
+                                (row.original as any).isInFolder && isFirstCell ? '40px' : '16px',
+                              backgroundColor: 'inherit',
+                              borderTopRightRadius: isFirstCell ? '8px' : 0,
+                              borderBottomRightRadius: isFirstCell ? '8px' : 0,
+                              borderTopLeftRadius: isLastCell ? '8px' : 0,
+                              borderBottomLeftRadius: isLastCell ? '8px' : 0,
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              textAlign: 'right',
+                              direction: 'rtl',
+                              display: 'flex',
+                              alignItems: 'center',
+                            }}
+                          >
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
-      <TablePagination table={table} />
+      <Group justify="center" mt="md">
+        <Text size="sm" c="dimmed">
+          סה"כ {tableRows.length} רשומות
+        </Text>
+      </Group>
 
-      {/* Modals */}
       <CreateFolderModal
         opened={createFolderModalOpen}
         onClose={() => setCreateFolderModalOpen(false)}
@@ -694,7 +709,7 @@ export function DataTable() {
         onClose={() => setAddToFolderModalOpen(false)}
         onAddToFolder={handleAddToFolder}
         folders={folderState.folders}
-        selectedCount={selectedRowsCount}
+        selectedCount={selectionInfo.selectedRowsCount}
       />
     </div>
   );

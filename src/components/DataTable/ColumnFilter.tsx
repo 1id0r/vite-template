@@ -1,21 +1,35 @@
-// ColumnFilter.tsx - Column filtering component
+// ColumnFilter.tsx - Column filtering component with TableRow support
 import React, { useMemo } from 'react';
 import { IconFilter } from '@tabler/icons-react';
 import { ActionIcon, Popover, Select, Stack, Text, TextInput } from '@mantine/core';
+import { DataItem, isFolder } from './types';
 
 // Filter component for text columns
 export const ColumnFilter = ({ column, table }: { column: any; table: any }) => {
-  const firstValue = table.getPreFilteredRowModel().flatRows[0]?.getValue(column.id);
+  // Get first non-folder row to determine column type
+  const firstDataRow = table
+    .getPreFilteredRowModel()
+    .flatRows.find((row: any) => !isFolder(row.original));
+  const firstValue = firstDataRow?.getValue(column.id);
 
   const columnFilterValue = column.getFilterValue();
 
-  // Get unique values for select filters
+  // Get unique values for select filters (only from data rows, not folders)
   const uniqueValues = useMemo(() => {
+    const dataRows = table
+      .getPreFilteredRowModel()
+      .flatRows.filter((row: any) => !isFolder(row.original));
+
     // Handle arrays like identities
     if (Array.isArray(firstValue)) {
       return Array.from(
         new Set(
-          table.getPreFilteredRowModel().flatRows.flatMap((row: any) => row.getValue(column.id))
+          dataRows
+            .flatMap((row: any) => {
+              const value = row.getValue(column.id);
+              return Array.isArray(value) ? value : [];
+            })
+            .filter(Boolean) // Remove empty/null/undefined values
         )
       ).sort();
     }
@@ -28,7 +42,11 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
       column.id === 'severity'
     ) {
       return Array.from(
-        new Set(table.getPreFilteredRowModel().flatRows.map((row: any) => row.getValue(column.id)))
+        new Set(
+          dataRows
+            .map((row: any) => row.getValue(column.id))
+            .filter((value) => value !== null && value !== undefined && value !== '') // Filter out empty values
+        )
       ).sort();
     }
 
@@ -58,18 +76,26 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
               value={columnFilterValue?.toString() || ''}
               onChange={(value) => column.setFilterValue(value || undefined)}
               data={[
-                { value: '', label: 'All' },
-                ...uniqueValues.map((value: any) => ({
-                  value: value.toString(),
-                  label: Array.isArray(firstValue)
-                    ? value
-                    : value.charAt(0).toUpperCase() + value.slice(1),
-                })),
+                { value: '', label: 'הכל' }, // Changed to Hebrew and ensure single empty option
+                ...uniqueValues
+                  .filter((value) => value !== null && value !== undefined && value !== '') // Extra safety filter
+                  .map((value: any) => ({
+                    value: value?.toString() || '',
+                    label: Array.isArray(firstValue)
+                      ? value
+                      : value
+                        ? value.charAt(0).toUpperCase() + value.slice(1)
+                        : '',
+                  })),
               ]}
               searchable
               clearable
               size="xs"
-              style={{ minWidth: '150px' }}
+              style={{
+                minWidth: '150px',
+                direction: 'rtl',
+                textAlign: 'right',
+              }}
             />
           </Stack>
         </Popover.Dropdown>
@@ -88,14 +114,18 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
       <Popover.Dropdown>
         <Stack gap="xs">
           <Text size="sm" fw={500}>
-            Filter {column.columnDef.header}
+            סנן {column.columnDef.header}
           </Text>
           <TextInput
-            placeholder="Filter..."
+            placeholder="סנן..."
             value={(columnFilterValue ?? '') as string}
             onChange={(e) => column.setFilterValue(e.target.value)}
             size="xs"
-            style={{ minWidth: '150px' }}
+            style={{
+              minWidth: '150px',
+              direction: 'rtl',
+              textAlign: 'right',
+            }}
           />
         </Stack>
       </Popover.Dropdown>

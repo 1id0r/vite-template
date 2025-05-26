@@ -185,7 +185,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
             onChange={(value) => {
               setPageSize(Number(value));
             }}
-            data={['5', '10', '20', '50']}
+            data={['5', '10', '20', '50','500']}
             style={{ width: '80px' }}
           />
 

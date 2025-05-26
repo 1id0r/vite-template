@@ -8,7 +8,7 @@ export const generateMockData = (): DataItem[] => {
   const environments = ['production', 'staging', 'development'] as const;
   const severities = ['warning', 'major', 'critical'] as const;
 
-  return Array.from({ length: 50 }, (_, i) => ({
+  return Array.from({ length: 5000 }, (_, i) => ({
     id: `id-${i + 1}`,
     objectId: `OBJ-${Math.floor(10000 + Math.random() * 90000)}`,
     description: `Issue description for item ${i + 1} - This is a longer description to test the column width and text wrapping behavior`,

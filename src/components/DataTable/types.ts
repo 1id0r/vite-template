@@ -78,23 +78,23 @@ export const severityColorMap = {
 export const getRowStyleBySeverity = (severity: DataItem['severity']) => {
   if (severity === 'critical') {
     return {
-      backgroundColor: '#ffebee', // Light red for critical severity
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      backgroundColor: '#fc9e9d', // Light red for critical severity
+      boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
     };
   } else if (severity === 'major') {
     return {
-      backgroundColor: '#fffde7', // Light yellow for major severity
+      backgroundColor: '#fff8b7', // Light yellow for major severity
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
     };
   } else if (severity === 'warning') {
     return {
-      backgroundColor: '#e3f2fd', // Light blue for warning severity
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      backgroundColor: '#b5e1ff', // Light blue for warning severity
+      boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
     };
   } else {
     return {
       backgroundColor: 'white',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
     };
   }
 };
