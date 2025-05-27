@@ -437,14 +437,6 @@ export function DataTable() {
         onAddToFolder={() => setAddToFolderModalOpen(true)}
       />
 
-      {selectionInfo.selectedRowsCount > 0 && (
-        <Group mb="md" justify="flex-start">
-          <Text size="sm" fw={500} c="blue">
-            {selectionInfo.selectedRowsCount} נבחרו מתוך {selectionInfo.totalFilteredRows} רשומות
-          </Text>
-        </Group>
-      )}
-
       <ActiveFilters table={table} setColumnFilters={setColumnFilters} />
 
       <div
@@ -693,9 +685,17 @@ export function DataTable() {
       </div>
 
       <Group justify="center" mt="md">
-        <Text size="sm" c="dimmed">
-          סה"כ {tableRows.length} רשומות
-        </Text>
+        {selectionInfo.selectedRowsCount > 0 ? (
+          <Group mb="md" justify="flex-start">
+            <Text size="sm" fw={500} c="blue">
+              {selectionInfo.selectedRowsCount} נבחרו מתוך {selectionInfo.totalFilteredRows} רשומות
+            </Text>
+          </Group>
+        ) : (
+          <Text size="sm" c="dimmed">
+            סה"כ {tableRows.length - 1} רשומות
+          </Text>
+        )}
       </Group>
 
       <CreateFolderModal

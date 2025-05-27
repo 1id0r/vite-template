@@ -53,7 +53,6 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
   const convertToCSV = (items: DataItem[]): string => {
     if (items.length === 0) return '';
 
-    // Define headers in Hebrew
     const headers = [
       'שם יישות',
       'תיאור',
@@ -93,12 +92,10 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
     return csvContent;
   };
 
-  // Convert data to JSON format
   const convertToJSON = (items: DataItem[]): string => {
     return JSON.stringify(items, null, 2);
   };
 
-  // Download file function
   const downloadFile = (content: string, filename: string, mimeType: string) => {
     const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
@@ -111,7 +108,6 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
     URL.revokeObjectURL(url);
   };
 
-  // Export selected rows
   const exportSelected = (format: 'csv' | 'json') => {
     const selectedData = selectedRows.map((row: any) => row.original);
     const timestamp = new Date().toISOString().split('T')[0];
@@ -125,7 +121,6 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
     }
   };
 
-  // Export all data
   const exportAll = (format: 'csv' | 'json') => {
     const timestamp = new Date().toISOString().split('T')[0];
 
@@ -138,7 +133,6 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
     }
   };
 
-  // Export filtered data
   const exportFiltered = (format: 'csv' | 'json') => {
     const filteredData = table.getFilteredRowModel().rows.map((row: any) => row.original);
     const timestamp = new Date().toISOString().split('T')[0];
@@ -160,8 +154,8 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
             placeholder="חיפוש בכל העמודות..."
             value={globalFilter ?? ''}
             onChange={(event) => setGlobalFilter(event.currentTarget.value)}
-            rightSection={<IconSearch size={16} />} // Changed from leftSection to rightSection for RTL
-            style={{ width: '300px' }}
+            leftSection={<IconSearch size={16} />}
+            style={{ width: '250px', borderRadius: 'px' }}
           />
           <ColumnSelector
             allColumns={allColumns}
@@ -176,23 +170,10 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
             onAddToFolder={onAddToFolder}
             hasSelectedRows={hasSelectedRows}
           />
-        </Group>
-
-        <Group>
-          <Text size="sm">פריטים בעמוד:</Text>
-          <Select
-            value={String(pageSize)}
-            onChange={(value) => {
-              setPageSize(Number(value));
-            }}
-            data={['5', '10', '20', '50','500']}
-            style={{ width: '80px' }}
-          />
-
           {/* Export Menu */}
           <Menu shadow="md" width={220} position="bottom-end">
             <Menu.Target>
-              <ActionIcon variant="subtle" color="gray" size="lg" aria-label="Export data">
+              <ActionIcon variant="subtle" size="md" aria-label="Export data">
                 <IconDownload size={18} />
               </ActionIcon>
             </Menu.Target>
@@ -234,6 +215,18 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
             </Menu.Dropdown>
           </Menu>
         </Group>
+
+        {/* <Group>
+          {/* <Text size="sm">פריטים בעמוד:</Text>
+          <Select
+            value={String(pageSize)}
+            onChange={(value) => {
+              setPageSize(Number(value));
+            }}
+            data={['5', '10', '20', '50', '500']}
+            style={{ width: '80px' }}
+          /> */}
+        {/* </Group> */}
       </Group>
     </div>
   );

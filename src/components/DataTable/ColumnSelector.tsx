@@ -1,9 +1,9 @@
-// ColumnSelector.tsx - Column visibility and reordering
 import React, { useEffect, useRef, useState } from 'react';
 import {
   IconCheck,
   IconChevronDown,
   IconColumns,
+  IconGripHorizontal,
   IconGripVertical,
   IconListDetails,
 } from '@tabler/icons-react';
@@ -27,16 +27,10 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   setColumnOrder,
   showAllColumns,
 }) => {
-  // Create a ref for the dropdown container
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Track if the dropdown is open
   const [opened, setOpened] = useState(false);
-
-  // Check if any columns are hidden
   const hasHiddenColumns = allColumns.some((column) => !column.getIsVisible());
 
-  // Handle column reordering
   const handleColumnReorder = (result: DropResult) => {
     if (!result.destination) return;
 
@@ -47,20 +41,18 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
     setColumnOrder(items);
   };
 
-  // Direct state update for column visibility
   const toggleColumnVisibility = (columnId: string) => {
     const newState = { ...columnVisibility };
 
     if (columnId in newState) {
-      delete newState[columnId]; // Make visible
+      delete newState[columnId];
     } else {
-      newState[columnId] = false; // Hide column
+      newState[columnId] = false;
     }
 
     setColumnVisibility(newState);
   };
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -68,7 +60,6 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
       }
     }
 
-    // Only add the event listener when the dropdown is open
     if (opened) {
       document.addEventListener('mousedown', handleClickOutside);
     }
@@ -80,12 +71,10 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
 
   return (
     <div style={{ position: 'relative' }} ref={dropdownRef}>
-      <Button
-        leftSection={<IconColumns size={16} />}
-        rightSection={<IconChevronDown size={16} />}
-        onClick={() => setOpened(!opened)}
-        variant="subtle"
-      ></Button>
+      <Button onClick={() => setOpened(!opened)} variant="subtle">
+        <IconColumns size={18} />
+        <IconChevronDown size={18} />
+      </Button>
 
       {opened && (
         <div
@@ -96,7 +85,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
             width: 280,
             backgroundColor: 'white',
             borderRadius: 8,
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
             zIndex: 100,
             overflow: 'hidden',
           }}
@@ -119,7 +108,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                 </Button>
                 <Button
                   size="xs"
-                  color="green"
+                  color="blue"
                   variant="filled"
                   leftSection={<IconCheck size={14} />}
                   onClick={() => setOpened(false)}
@@ -164,42 +153,55 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                                 ...provided.draggableProps.style,
                               }}
                             >
-                              <div style={{ flex: 1 }}>
+                              {/* Left side - Checkbox and Text */}
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  cursor: 'pointer',
+                                  flex: 1,
+                                }}
+                                onClick={() => toggleColumnVisibility(column.id)}
+                              >
                                 <div
                                   style={{
+                                    width: '16px',
+                                    height: '16px',
+                                    marginLeft: '8px',
+                                    border: '2px solid #228be6',
+                                    borderRadius: '4px',
+                                    backgroundColor: isVisible ? '#228be6' : 'white',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    cursor: 'pointer',
+                                    justifyContent: 'center',
+                                    color: 'white',
+                                    flexShrink: 0,
                                   }}
-                                  onClick={() => toggleColumnVisibility(column.id)}
                                 >
-                                  <div
-                                    style={{
-                                      width: '18px',
-                                      height: '18px',
-                                      marginRight: '8px',
-                                      border: '2px solid #228be6',
-                                      borderRadius: '4px',
-                                      backgroundColor: isVisible ? '#228be6' : 'white',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      color: 'white',
-                                    }}
-                                  >
-                                    {isVisible && <IconCheck size={12} />}
-                                  </div>
-                                  <Text size="sm">{header}</Text>
+                                  {isVisible && <IconCheck size={12} />}
                                 </div>
+                                <Text size="sm" style={{ marginLeft: '8px' }}>
+                                  {header}
+                                </Text>
                               </div>
-                              <div style={{ display: 'flex', gap: '8px' }}>
-                                <IconListDetails size={16} style={{ opacity: 0.5 }} />
-                                <div {...provided.dragHandleProps}>
-                                  <IconGripVertical
-                                    size={16}
-                                    style={{ opacity: 0.5, cursor: 'grab' }}
-                                  />
-                                </div>
+
+                              {/* Right side - Drag handle */}
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  flexShrink: 0,
+                                }}
+                                {...provided.dragHandleProps}
+                              >
+                                <IconGripVertical
+                                  size={18}
+                                  style={{
+                                    opacity: 0.5,
+                                    cursor: 'grab',
+                                    display: 'block',
+                                  }}
+                                />
                               </div>
                             </div>
                           )}

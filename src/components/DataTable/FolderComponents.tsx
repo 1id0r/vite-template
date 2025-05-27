@@ -173,16 +173,16 @@ export const FolderRow: React.FC<FolderRowProps> = ({
   return (
     <Group gap="xs" wrap="nowrap" style={{ width: '100%' }}>
       <ActionIcon variant="subtle" size="sm" onClick={() => onToggleExpansion(folder.id)}>
-        {isExpanded ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />}
+        {isExpanded ? <IconChevronDown size={18} /> : <IconChevronRight size={18} />}
       </ActionIcon>
 
-      <IconFolder size={16} color="orange" />
+      <IconFolder size={18} color="black" />
 
       {isEditing ? (
         <TextInput
           value={editName}
           onChange={(e) => setEditName(e.currentTarget.value)}
-          onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyPress}
           onBlur={handleSaveEdit}
           size="xs"
           style={{ minWidth: '150px' }}
@@ -195,12 +195,12 @@ export const FolderRow: React.FC<FolderRowProps> = ({
       )}
 
       {/* Edit and Delete icons right next to the name */}
-      <ActionIcon variant="subtle" size="sm" onClick={() => setIsEditing(true)} color="blue">
-        <IconEdit size={14} />
+      <ActionIcon variant="subtle" size="md" onClick={() => setIsEditing(true)} color="blue">
+        <IconEdit size={18} />
       </ActionIcon>
 
-      <ActionIcon variant="subtle" size="sm" onClick={() => onDelete(folder.id)} color="red">
-        <IconTrash size={14} />
+      <ActionIcon variant="subtle" size="md" onClick={() => onDelete(folder.id)} color="red">
+        <IconTrash size={18} />
       </ActionIcon>
     </Group>
   );
