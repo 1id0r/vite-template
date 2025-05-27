@@ -1,12 +1,10 @@
-// DataTable.tsx - Proper Virtual Scrolling for 500+ rows
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ColumnFiltersState,
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   RowSelectionState,
   SortingState,
@@ -245,7 +243,7 @@ export function DataTable() {
         header: 'מקור התראה',
         cell: (info) => {
           if (isFolder(info.row.original)) return null;
-          return <Text color="black">{info.getValue()}</Text>;
+          return <Text c="black">{info.getValue()}</Text>;
         },
         enableColumnFilter: true,
         size: 120,
@@ -255,7 +253,7 @@ export function DataTable() {
         header: 'SN מזהה',
         cell: (info) => {
           if (isFolder(info.row.original)) return null;
-          return <Text color="black">{info.getValue()}</Text>;
+          return <Text c="black">{info.getValue()}</Text>;
         },
         enableColumnFilter: true,
         size: 150,
@@ -266,7 +264,7 @@ export function DataTable() {
         cell: (info) => {
           if (isFolder(info.row.original)) return null;
           const identities = info.getValue() as string[];
-          return <Text color="black">{identities?.join(', ') || ''}</Text>;
+          return <Text c="black">{identities?.join(', ') || ''}</Text>;
         },
         enableColumnFilter: true,
         filterFn: (row, columnId, filterValue) => {
