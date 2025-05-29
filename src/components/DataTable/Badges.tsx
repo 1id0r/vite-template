@@ -1,6 +1,7 @@
 // Badges.tsx - All badge components
 import React from 'react';
 import { Badge } from '@mantine/core';
+import { IconX, IconExclamationMark, IconInfoCircle } from '@tabler/icons-react';
 import {
   DataItem,
   environmentColorMap,
@@ -38,8 +39,50 @@ export const EnvironmentBadge = ({ environment }: { environment: DataItem['envir
 
 // Severity Badge component
 export const SeverityBadge = ({ severity }: { severity: DataItem['severity'] }) => {
+  const getBorderColor = (severity: DataItem['severity']) => {
+    switch (severity) {
+      case 'major':
+        return '#ffd700'; // Golden yellow color for major severity
+      case 'critical':
+        return severityColorMap[severity];
+      case 'warning':
+        return severityColorMap[severity];
+      default:
+        return severityColorMap[severity];
+    }
+  };
+
+  const getIcon = (severity: DataItem['severity']) => {
+    const iconStyle = { position: 'relative' as const, top: 2, marginLeft: 4 };
+    switch (severity) {
+      case 'critical':
+        return <IconX size={12} style={iconStyle} />;
+      case 'major':
+        return <IconExclamationMark size={12} style={iconStyle} />;
+      case 'warning':
+        return <IconInfoCircle size={12} style={iconStyle} />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <Badge color={severityColorMap[severity]} variant="filled" radius="md" size="sm">
+    <Badge 
+      color={severityColorMap[severity]} 
+      variant="light" 
+      radius="md" 
+      size="sm"
+      style={{ 
+        border: `1px solid ${getBorderColor(severity)}`,
+        backgroundColor: 'transparent',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '2px',
+        padding: '0 8px',
+        height: '20px'
+      }}
+    >
+      {getIcon(severity)}
       {severity.charAt(0).toUpperCase() + severity.slice(1)}
     </Badge>
   );

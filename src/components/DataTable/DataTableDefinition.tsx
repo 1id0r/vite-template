@@ -61,6 +61,12 @@ export const createColumns = () => [
     ),
     enableColumnFilter: true,
     size: 300,
+  }), columnHelper.accessor('severity', {
+    header: 'חומרה',
+    cell: (info) => <SeverityBadge severity={info.getValue()} />,
+    enableColumnFilter: true,
+    filterFn: 'equals',
+    size: 120,
   }),
   columnHelper.accessor('hierarchy', {
     header: 'היררכיה',
@@ -126,12 +132,6 @@ export const createColumns = () => [
     },
     size: 250,
   }),
-  // Severity column
-  columnHelper.accessor('severity', {
-    header: 'חומרה',
-    cell: (info) => <SeverityBadge severity={info.getValue()} />,
-    enableColumnFilter: true,
-    filterFn: 'equals',
-    size: 120,
-  }),
+
+ 
 ];

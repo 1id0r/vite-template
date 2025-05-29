@@ -1,5 +1,7 @@
 // types.ts - Data types and interfaces with folder support
 
+import { borderResolver } from "@mantine/core/lib/core/Box/style-props/resolvers/border-resolver/border-resolver";
+
 // Define the data type for our table
 export type DataItem = {
   id: string;
@@ -78,23 +80,25 @@ export const severityColorMap = {
 export const getRowStyleBySeverity = (severity: DataItem['severity']) => {
   if (severity === 'critical') {
     return {
-      backgroundColor: '#fc9e9d', // Light red for critical severity
-      boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+      backgroundColor: '#fff3f3', // Light red for critical severity
+      boxShadow: '0 1px 1px rgba(0,0,0,0.2)',
+      
     };
   } else if (severity === 'major') {
     return {
       backgroundColor: '#fff8b7', // Light yellow for major severity
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      boxShadow: '0 1px 1px rgba(255, 248, 183,0.2)',
+      // borderfdd4d4
     };
   } else if (severity === 'warning') {
     return {
       backgroundColor: '#b5e1ff', // Light blue for warning severity
-      boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+      boxShadow: '0 1px 1px rgba(0,0,0,0.4)',
     };
   } else {
     return {
       backgroundColor: 'white',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.4)',
+      boxShadow: '0 1px 1px rgba(0,0,0,0.4)',
     };
   }
 };

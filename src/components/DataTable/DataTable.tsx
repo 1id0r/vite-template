@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { IconX } from '@tabler/icons-react';
 import {
   ColumnFiltersState,
   createColumnHelper,
@@ -12,7 +13,7 @@ import {
   VisibilityState,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { Box, Checkbox, Group, Text, Tooltip } from '@mantine/core';
+import { ActionIcon, Box, Checkbox, Group, Modal, Stack, Text, Tooltip } from '@mantine/core';
 import { ActiveFilters } from './ActiveFilters';
 import { EnvironmentBadge, ImpactBadge, SeverityBadge, StatusBadge } from './Badges';
 import { ColumnFilter } from './ColumnFilter';
@@ -40,6 +41,17 @@ import {
   TableRow,
 } from './types';
 
+// Format date as d/m and hour:minute
+function formatDateDMHour(dateString: string) {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const hour = date.getHours().toString().padStart(2, '0');
+  const minute = date.getMinutes().toString().padStart(2, '0');
+  return `${day}/${month} ${hour}:${minute}`;
+}
+
 export function DataTable() {
   const [originalData] = useState<DataItem[]>(() => generateMockData());
 
@@ -66,7 +78,12 @@ export function DataTable() {
   const [createFolderModalOpen, setCreateFolderModalOpen] = useState(false);
   const [addToFolderModalOpen, setAddToFolderModalOpen] = useState(false);
 
+  const [selectedRow, setSelectedRow] = useState<DataItem | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
   const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const tableOuterContainerRef = useRef<HTMLDivElement>(null);
 
   const memoizedDisplayData = useMemo(
     () => generateTableRows(folderState, originalData),
@@ -88,27 +105,7 @@ export function DataTable() {
     () => [
       {
         id: 'select',
-        header: ({ table }: any) => {
-          const dataRows = table
-            .getFilteredRowModel()
-            .rows.filter((row: any) => !isFolder(row.original));
-          const isAllDataRowsSelected =
-            dataRows.length > 0 && dataRows.every((row: any) => row.getIsSelected());
-          const isSomeDataRowsSelected = dataRows.some((row: any) => row.getIsSelected());
-
-          return (
-            <Checkbox
-              checked={isAllDataRowsSelected}
-              indeterminate={isSomeDataRowsSelected && !isAllDataRowsSelected}
-              onChange={(event) => {
-                dataRows.forEach((row: any) => {
-                  row.toggleSelected(event.currentTarget.checked);
-                });
-              }}
-              size="sm"
-            />
-          );
-        },
+        header: () => null,
         cell: ({ row }: any) => {
           if (isFolder(row.original)) return null;
           return (
@@ -117,6 +114,7 @@ export function DataTable() {
               disabled={!row.getCanSelect()}
               onChange={row.getToggleSelectedHandler()}
               size="sm"
+              onClick={(e) => e.stopPropagation()}
             />
           );
         },
@@ -178,7 +176,7 @@ export function DataTable() {
         header: 'עודכן לאחרונה',
         cell: (info) => {
           if (isFolder(info.row.original)) return null;
-          return <Text color="black">{info.getValue()}</Text>;
+          return <Text color="black">{formatDateDMHour(info.getValue())}</Text>;
         },
         enableColumnFilter: true,
         size: 150,
@@ -188,7 +186,7 @@ export function DataTable() {
         header: 'זמן התחלה',
         cell: (info) => {
           if (isFolder(info.row.original)) return null;
-          return <Text color="black">{info.getValue()}</Text>;
+          return <Text color="black">{formatDateDMHour(info.getValue())}</Text>;
         },
         enableColumnFilter: true,
         size: 150,
@@ -257,24 +255,6 @@ export function DataTable() {
         },
         enableColumnFilter: true,
         size: 150,
-      }),
-      columnHelper.accessor((row) => (isFolder(row) ? '' : row.identities), {
-        id: 'identities',
-        header: 'מזהים',
-        cell: (info) => {
-          if (isFolder(info.row.original)) return null;
-          const identities = info.getValue() as string[];
-          return <Text c="black">{identities?.join(', ') || ''}</Text>;
-        },
-        enableColumnFilter: true,
-        filterFn: (row, columnId, filterValue) => {
-          if (!filterValue || isFolder(row.original)) return true;
-          const identities = (row.original as DataItem).identities;
-          return identities.some((identity) =>
-            identity.toLowerCase().includes(filterValue.toLowerCase())
-          );
-        },
-        size: 250,
       }),
       columnHelper.accessor((row) => (isFolder(row) ? '' : row.severity), {
         id: 'severity',
@@ -346,7 +326,10 @@ export function DataTable() {
 
   const totalWidth = useMemo(
     () =>
-      table.getHeaderGroups()[0]?.headers.reduce((sum, header) => sum + header.getSize(), 0) || 0,
+      table
+        .getHeaderGroups()[0]
+        ?.headers.filter((header) => header.column.getIsVisible())
+        .reduce((sum, header) => sum + header.getSize(), 0) || 0,
     [table]
   );
 
@@ -414,6 +397,27 @@ export function DataTable() {
     [originalData]
   );
 
+  // Helper to get row info for modal
+  const handleRowClick = (row: TableRow) => {
+    if (!isFolder(row)) {
+      setSelectedRow(row as DataItem);
+      setModalOpen(true);
+    }
+  };
+
+  useEffect(() => {
+    if (!tableOuterContainerRef.current) return;
+    const handleResize = () => {
+      setContainerWidth(tableOuterContainerRef.current?.offsetWidth || 0);
+    };
+    handleResize();
+    const resizeObserver = new window.ResizeObserver(handleResize);
+    resizeObserver.observe(tableOuterContainerRef.current);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  const tableWidth = Math.max(totalWidth, containerWidth);
+
   return (
     <div style={{ width: '100%', direction: 'rtl' }}>
       <TableHeader
@@ -437,7 +441,49 @@ export function DataTable() {
 
       <ActiveFilters table={table} setColumnFilters={setColumnFilters} />
 
+      {modalOpen && selectedRow && (
+        <Box
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            height: '100vh',
+            width: 400,
+            background: 'white',
+            boxShadow: '2px 0 8px rgba(0,0,0,0.08)',
+            zIndex: 10,
+            padding: 24,
+            overflowY: 'auto',
+            borderRadius: 0,
+          }}
+        >
+          <Group justify="space-between" mb="md">
+            <Text fw={700} size="lg">
+              פרטי רשומה
+            </Text>
+            <ActionIcon onClick={() => setModalOpen(false)} variant="subtle">
+              <IconX />
+            </ActionIcon>
+          </Group>
+          <Stack gap="xs">
+            <Text>שם יישות: {selectedRow.objectId}</Text>
+            <Text>תיאור: {selectedRow.description}</Text>
+            <Text>היררכיה: {selectedRow.hierarchy}</Text>
+            <Text>עודכן לאחרונה: {formatDateDMHour(selectedRow.lastUpdated)}</Text>
+            <Text>זמן התחלה: {formatDateDMHour(selectedRow.startTime)}</Text>
+            <Text>סטטוס: {selectedRow.status}</Text>
+            <Text>אימפקט עסקי: {selectedRow.impact}</Text>
+            <Text>סביבה: {selectedRow.environment}</Text>
+            <Text>מקור התראה: {selectedRow.origin}</Text>
+            <Text>SN מזהה: {selectedRow.snId}</Text>
+            <Text>מזהים: {selectedRow.identities?.join(', ')}</Text>
+            <Text>חומרה: {selectedRow.severity}</Text>
+          </Stack>
+        </Box>
+      )}
+
       <div
+        ref={tableOuterContainerRef}
         style={{
           width: '100%',
           borderRadius: '8px',
@@ -462,7 +508,8 @@ export function DataTable() {
               top: 0,
               backgroundColor: 'white',
               zIndex: 10,
-              minWidth: `${totalWidth}px`,
+              width: totalWidth < containerWidth ? '100%' : `${totalWidth}px`,
+              minWidth: 'unset',
               borderBottom: '1px solid #e9ecef',
             }}
           >
@@ -581,7 +628,8 @@ export function DataTable() {
           <div
             style={{
               height: `${rowVirtualizer.getTotalSize()}px`,
-              width: '100%',
+              width: totalWidth < containerWidth ? '100%' : `${totalWidth}px`,
+              minWidth: 'unset',
               position: 'relative',
             }}
           >
@@ -606,7 +654,9 @@ export function DataTable() {
                     paddingBottom: '8px',
                     transform: `translateY(${virtualRow.start}px) ${row.getIsSelected() ? 'scale(0.99)' : 'scale(1)'}`,
                     transition: 'opacity 0.1s ease, transform 0.1s ease',
+                    cursor: !isRowFolder ? 'pointer' : undefined,
                   }}
+                  onClick={() => handleRowClick(row.original)}
                 >
                   <div
                     style={{
@@ -691,7 +741,7 @@ export function DataTable() {
           </Group>
         ) : (
           <Text size="sm" c="dimmed">
-            סה"כ {tableRows.length - 1} רשומות
+            סה"כ {tableRows.length} רשומות
           </Text>
         )}
       </Group>
