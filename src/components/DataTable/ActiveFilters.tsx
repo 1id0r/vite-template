@@ -7,7 +7,6 @@ interface ActiveFiltersProps {
 }
 
 export const ActiveFilters: React.FC<ActiveFiltersProps> = ({ table, setColumnFilters }) => {
-  // If no active filters, don't render anything
   if (table.getState().columnFilters.length === 0) {
     return null;
   }

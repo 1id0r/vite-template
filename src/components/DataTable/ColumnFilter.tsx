@@ -3,9 +3,7 @@ import { MdFilterList } from 'react-icons/md';
 import { ActionIcon, Popover, Select, Stack, Text, TextInput } from '@mantine/core';
 import { DataItem, isFolder } from './types';
 
-// Filter component for text columns
 export const ColumnFilter = ({ column, table }: { column: any; table: any }) => {
-  // Get first non-folder row to determine column type
   const firstDataRow = table
     .getPreFilteredRowModel()
     .flatRows.find((row: any) => !isFolder(row.original));
@@ -13,13 +11,11 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
 
   const columnFilterValue = column.getFilterValue();
 
-  // Get unique values for select filters (only from data rows, not folders)
   const uniqueValues = useMemo(() => {
     const dataRows = table
       .getPreFilteredRowModel()
       .flatRows.filter((row: any) => !isFolder(row.original));
 
-    // Handle arrays like identities
     if (Array.isArray(firstValue)) {
       return Array.from(
         new Set(
@@ -28,12 +24,11 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
               const value = row.getValue(column.id);
               return Array.isArray(value) ? value : [];
             })
-            .filter(Boolean) // Remove empty/null/undefined values
+            .filter(Boolean)
         )
       ).sort();
     }
 
-    // Handle enum values like status, impact, environment, severity
     if (
       column.id === 'status' ||
       column.id === 'impact' ||
@@ -44,7 +39,7 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
         new Set(
           dataRows
             .map((row: any) => row.getValue(column.id))
-            .filter((value: any) => value !== null && value !== undefined && value !== '') // Filter out empty values
+            .filter((value: any) => value !== null && value !== undefined && value !== '')
         )
       ).sort();
     }
@@ -52,7 +47,6 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
     return [];
   }, [column.id, firstValue, table]);
 
-  // For enum columns, use a select input
   if (
     column.id === 'status' ||
     column.id === 'impact' ||
@@ -77,9 +71,9 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
               value={columnFilterValue?.toString() || ''}
               onChange={(value) => column.setFilterValue(value || undefined)}
               data={[
-                { value: '', label: 'הכל' }, // Changed to Hebrew and ensure single empty option
+                { value: '', label: 'הכל' },
                 ...uniqueValues
-                  .filter((value) => value !== null && value !== undefined && value !== '') // Extra safety filter
+                  .filter((value) => value !== null && value !== undefined && value !== '')
                   .map((value: any) => ({
                     value: value?.toString() || '',
                     label: Array.isArray(firstValue)
@@ -104,7 +98,6 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
     );
   }
 
-  // Default text filter for other columns
   return (
     <Popover position="bottom" shadow="md" withinPortal>
       <Popover.Target>

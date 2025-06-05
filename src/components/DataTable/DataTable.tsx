@@ -92,13 +92,11 @@ export function DataTable() {
   const [selectedRow, setSelectedRow] = useState<DataItem | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  // State for context menu
   const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(
     null
   );
   const [contextMenuRowId, setContextMenuRowId] = useState<string | null>(null);
 
-  // New state to hold row IDs to move to a folder (from selection or context menu)
   const [rowIdsToMove, setRowIdsToMove] = useState<string[]>([]);
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -210,21 +208,6 @@ export function DataTable() {
         },
         enableColumnFilter: true,
         size: 150,
-      }),
-      columnHelper.accessor((row) => (isFolder(row) ? '' : row.status), {
-        id: 'status',
-        header: 'סטטוס',
-        cell: (info) => {
-          if (isFolder(info.row.original)) return null;
-          return <StatusBadge status={info.getValue() as DataItem['status']} />;
-        },
-        enableColumnFilter: true,
-        filterFn: (row, columnId, filterValue) => {
-          if (!filterValue || isFolder(row.original)) return true;
-          const status = (row.original as DataItem).status;
-          return status === filterValue;
-        },
-        size: 120,
       }),
       columnHelper.accessor((row) => (isFolder(row) ? '' : row.impact), {
         id: 'impact',
@@ -353,6 +336,10 @@ export function DataTable() {
     [table]
   );
 
+  // Calculate if we need to stretch columns to fill container
+  const shouldStretchColumns = containerWidth > totalWidth;
+  const stretchRatio = shouldStretchColumns ? containerWidth / totalWidth : 1;
+
   const allColumns = useMemo(
     () =>
       table.getAllColumns().filter((column) => {
@@ -417,7 +404,6 @@ export function DataTable() {
     [originalData]
   );
 
-  // Helper to get row info for modal (on left click)
   const handleRowClick = (row: TableRow) => {
     if (!isFolder(row)) {
       setSelectedRow(row as DataItem);
@@ -425,46 +411,38 @@ export function DataTable() {
     }
   };
 
-  // Handle right-click on a row to open context menu
   const handleContextMenu = (event: React.MouseEvent, rowId: string) => {
     event.preventDefault(); // Prevent default browser context menu
     setContextMenuPosition({ x: event.clientX, y: event.clientY });
     setContextMenuRowId(rowId);
   };
 
-  // Handle Add to Folder action from context menu
   const handleAddToFolderFromContextMenu = () => {
     if (contextMenuRowId) {
-      // Combine currently selected rows with the right-clicked row
       const currentSelectionIds = Object.keys(rowSelection); // Get IDs from rowSelection state
       const idsToMove = new Set([...currentSelectionIds, contextMenuRowId]);
       setRowIdsToMove(Array.from(idsToMove));
       setAddToFolderModalOpen(true);
     }
-    setContextMenuPosition(null); // Close the context menu
+    setContextMenuPosition(null);
     setContextMenuRowId(null);
   };
 
-  // Handle Remove from Folder action
   const handleRemoveFromFolder = useCallback(
     (rowId: string) => {
       setFolderState((prev) => {
-        // Find the folder the item is in
         const folderContainingItem = prev.folders.find((folder) => folder.rowIds.includes(rowId));
 
         if (!folderContainingItem) {
-          // Item is not in a folder, do nothing
           return prev;
         }
 
-        // Find the original data item to get its severity for count updates
         const originalDataItem = originalData.find((item) => item.id === rowId);
 
         const newState = {
           ...prev,
           folders: prev.folders.map((folder) => {
             if (folder.id === folderContainingItem.id) {
-              // Remove the item from the folder's rowIds list and update counts
               return {
                 ...folder,
                 rowIds: folder.rowIds.filter((id) => id !== rowId),
@@ -477,24 +455,20 @@ export function DataTable() {
             }
             return folder;
           }),
-          unassignedRows: [
-            ...prev.unassignedRows,
-            originalDataItem!, // Add the item back to unassigned rows
-          ].filter(Boolean) as DataItem[], // Filter out any undefined in case item is not found (shouldn't happen)
+          unassignedRows: [...prev.unassignedRows, originalDataItem!].filter(Boolean) as DataItem[],
         };
 
-        setTableVersion((v) => v + 1); // Trigger re-render
+        setTableVersion((v) => v + 1);
         return newState;
       });
-      // Clear selection and context menu after action
+
       setRowSelection({});
       setContextMenuPosition(null);
       setContextMenuRowId(null);
     },
-    [originalData] // Depend on originalData to find the severity
+    [originalData]
   );
 
-  // Close context menu when clicking elsewhere
   useEffect(() => {
     if (!contextMenuPosition) return;
 
@@ -590,14 +564,13 @@ export function DataTable() {
           opened={!!contextMenuPosition}
           onClose={() => setContextMenuPosition(null)}
           position="bottom-start"
-          offset={0} // Offset relative to mouse position
+          offset={0}
           styles={{
             dropdown: {
-              // Use 'dropdown' key for styling the dropdown panel
               position: 'fixed',
               top: contextMenuPosition.y,
               left: contextMenuPosition.x,
-              zIndex: 1000, // Ensure it's above other elements
+              zIndex: 1000,
             },
           }}
           withArrow
@@ -665,8 +638,8 @@ export function DataTable() {
               top: 0,
               backgroundColor: 'white',
               zIndex: 10,
-              width: totalWidth < containerWidth ? '100%' : `${totalWidth}px`,
-              minWidth: 'unset',
+              width: '100%',
+              minWidth: `${totalWidth}px`,
               borderBottom: '1px solid #e9ecef',
             }}
           >
@@ -678,106 +651,112 @@ export function DataTable() {
                   direction: 'rtl',
                 }}
               >
-                {headerGroup.headers.map((header) => (
-                  <div
-                    key={header.id}
-                    style={{
-                      cursor: header.column.getCanSort() ? 'pointer' : 'default',
-                      position: 'relative',
-                      width: `${header.getSize()}px`,
-                      minWidth: `${header.getSize()}px`,
-                      maxWidth: `${header.getSize()}px`,
-                      padding: '4px 8px',
-                      fontWeight: 500,
-                      backgroundColor: 'white',
-                      borderLeft: 'none',
-                      userSelect: 'none',
-                      textAlign: 'right',
-                      direction: 'rtl',
-                      transition: 'background-color 0.2s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#f8f9fa';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'white';
-                    }}
-                  >
-                    <Box
-                      onClick={
-                        header.column.getCanSort()
-                          ? header.column.getToggleSortingHandler()
-                          : undefined
-                      }
+                {headerGroup.headers.map((header) => {
+                  const headerWidth = shouldStretchColumns
+                    ? Math.floor(header.getSize() * stretchRatio)
+                    : header.getSize();
+
+                  return (
+                    <div
+                      key={header.id}
                       style={{
                         cursor: header.column.getCanSort() ? 'pointer' : 'default',
-                        flex: 1,
-                        minWidth: 0,
+                        position: 'relative',
+                        width: `${headerWidth}px`,
+                        minWidth: `${headerWidth}px`,
+                        maxWidth: `${headerWidth}px`,
+                        padding: '4px 8px',
+                        fontWeight: 500,
+                        backgroundColor: 'white',
+                        borderLeft: 'none',
+                        userSelect: 'none',
+                        textAlign: 'right',
+                        direction: 'rtl',
+                        transition: 'background-color 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f8f9fa';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'white';
                       }}
                     >
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {header.column.getIsSorted() === 'asc' && ' ↑'}
-                      {header.column.getIsSorted() === 'desc' && ' ↓'}
-                    </Box>
-                    <div style={{ flexShrink: 0 }}>
-                      {header.column.getCanFilter() && (
-                        <ColumnFilter column={header.column} table={table} />
+                      <Box
+                        onClick={
+                          header.column.getCanSort()
+                            ? header.column.getToggleSortingHandler()
+                            : undefined
+                        }
+                        style={{
+                          cursor: header.column.getCanSort() ? 'pointer' : 'default',
+                          flex: 1,
+                          minWidth: 0,
+                        }}
+                      >
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.column.getIsSorted() === 'asc' && ' ↑'}
+                        {header.column.getIsSorted() === 'desc' && ' ↓'}
+                      </Box>
+                      <div style={{ flexShrink: 0 }}>
+                        {header.column.getCanFilter() && (
+                          <ColumnFilter column={header.column} table={table} />
+                        )}
+                      </div>
+
+                      {header.column.getCanResize() && (
+                        <div
+                          onMouseDown={(e) => {
+                            const startX = e.clientX;
+                            const startSize = header.getSize();
+                            const columnId = header.column.id;
+
+                            const onMouseMove = (moveEvent: MouseEvent) => {
+                              const delta = startX - moveEvent.clientX;
+                              const newSize = Math.max(50, startSize + delta);
+                              table.setColumnSizing((prev) => ({
+                                ...prev,
+                                [columnId]: newSize,
+                              }));
+                            };
+
+                            const onMouseUp = () => {
+                              document.removeEventListener('mousemove', onMouseMove);
+                              document.removeEventListener('mouseup', onMouseUp);
+                            };
+
+                            document.addEventListener('mousemove', onMouseMove);
+                            document.addEventListener('mouseup', onMouseUp);
+                          }}
+                          style={{
+                            position: 'absolute',
+                            left: '-2px',
+                            top: 0,
+                            height: '100%',
+                            width: '4px',
+                            background: 'transparent',
+                            cursor: 'col-resize',
+                            userSelect: 'none',
+                            touchAction: 'none',
+                            zIndex: 1,
+                            borderLeft: '2px solid transparent',
+                            transition: 'border-color 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.borderLeft = '2px solid #228be6';
+                            e.currentTarget.style.background = 'rgba(34, 139, 230, 0.1)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.borderLeft = '2px solid transparent';
+                            e.currentTarget.style.background = 'transparent';
+                          }}
+                        />
                       )}
                     </div>
-
-                    {header.column.getCanResize() && (
-                      <div
-                        onMouseDown={(e) => {
-                          const startX = e.clientX;
-                          const startSize = header.getSize();
-                          const columnId = header.column.id;
-
-                          const onMouseMove = (moveEvent: MouseEvent) => {
-                            const delta = startX - moveEvent.clientX;
-                            const newSize = Math.max(50, startSize + delta);
-                            table.setColumnSizing((prev) => ({
-                              ...prev,
-                              [columnId]: newSize,
-                            }));
-                          };
-
-                          const onMouseUp = () => {
-                            document.removeEventListener('mousemove', onMouseMove);
-                            document.removeEventListener('mouseup', onMouseUp);
-                          };
-
-                          document.addEventListener('mousemove', onMouseMove);
-                          document.addEventListener('mouseup', onMouseUp);
-                        }}
-                        style={{
-                          position: 'absolute',
-                          left: '-2px',
-                          top: 0,
-                          height: '100%',
-                          width: '4px',
-                          background: 'transparent',
-                          cursor: 'col-resize',
-                          userSelect: 'none',
-                          touchAction: 'none',
-                          zIndex: 1,
-                          borderLeft: '2px solid transparent',
-                          transition: 'border-color 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderLeft = '2px solid #228be6';
-                          e.currentTarget.style.background = 'rgba(34, 139, 230, 0.1)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderLeft = '2px solid transparent';
-                          e.currentTarget.style.background = 'transparent';
-                        }}
-                      />
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ))}
           </div>
@@ -785,8 +764,8 @@ export function DataTable() {
           <div
             style={{
               height: `${rowVirtualizer.getTotalSize()}px`,
-              width: `${totalWidth}px`,
-              minWidth: 'unset',
+              width: '100%',
+              minWidth: `${totalWidth}px`,
               position: 'relative',
             }}
           >
@@ -853,14 +832,17 @@ export function DataTable() {
                       row.getVisibleCells().map((cell, cellIndex) => {
                         const isFirstCell = cellIndex === 0;
                         const isLastCell = cellIndex === row.getVisibleCells().length - 1;
+                        const cellWidth = shouldStretchColumns
+                          ? Math.floor(cell.column.getSize() * stretchRatio)
+                          : cell.column.getSize();
 
                         return (
                           <div
                             key={cell.id}
                             style={{
-                              width: `${cell.column.getSize()}px`,
-                              minWidth: `${cell.column.getSize()}px`,
-                              maxWidth: `${cell.column.getSize()}px`,
+                              width: `${cellWidth}px`,
+                              minWidth: `${cellWidth}px`,
+                              maxWidth: `${cellWidth}px`,
                               padding: '16px',
                               paddingRight:
                                 (row.original as any).isInFolder && isFirstCell ? '40px' : '16px',
@@ -915,27 +897,25 @@ export function DataTable() {
         opened={addToFolderModalOpen}
         onClose={() => {
           setAddToFolderModalOpen(false);
-          // Clear temporary state used for context menu or header action
           setRowIdsToMove([]);
           setContextMenuRowId(null);
           setContextMenuPosition(null);
         }}
         onAddToFolder={(folderId) => {
-          const idsToMove = rowIdsToMove.length > 0 ? rowIdsToMove : selectionInfo.selectedRowIds; // Use rowIdsToMove if set, otherwise use selectionInfo
+          const idsToMove = rowIdsToMove.length > 0 ? rowIdsToMove : selectionInfo.selectedRowIds;
           if (idsToMove.length > 0) {
             setFolderState((prev) => moveRowsToFolder(prev, idsToMove, folderId));
-            // Always clear selection after adding to folder
             setRowSelection({});
           }
           setAddToFolderModalOpen(false);
-          setRowIdsToMove([]); // Clear rowIdsToMove after action
-          setContextMenuRowId(null); // Clear context menu row id
-          setContextMenuPosition(null); // Clear context menu position
+          setRowIdsToMove([]);
+          setContextMenuRowId(null);
+          setContextMenuPosition(null);
         }}
         folders={folderState.folders}
         selectedCount={
           rowIdsToMove.length > 0 ? rowIdsToMove.length : selectionInfo.selectedRowsCount
-        } // Show count from rowIdsToMove or selectionInfo
+        }
       />
     </div>
   );

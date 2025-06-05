@@ -154,7 +154,20 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
             value={globalFilter ?? ''}
             onChange={(event) => setGlobalFilter(event.currentTarget.value)}
             leftSection={<MdSearch size={16} />}
-            style={{ width: '250px', borderRadius: 'px' }}
+            style={{
+              width: '250px',
+              borderRadius: '16px',
+            }}
+            styles={{
+              input: {
+                backgroundColor: '#f9fafc',
+                borderColor: '#687aaf',
+
+                '&:focus': {
+                  borderColor: '#687aaf',
+                },
+              },
+            }}
           />
           <ColumnSelector
             allColumns={allColumns}

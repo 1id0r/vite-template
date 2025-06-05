@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MdCheck, MdDragIndicator, MdSettings } from 'react-icons/md';
+import { MdCheck, MdOutlineSettingsInputComponent, MdSettings } from 'react-icons/md';
+import { RxDragHandleHorizontal } from 'react-icons/rx';
 import { Button, Text } from '@mantine/core';
 
 interface ColumnSelectorProps {
@@ -25,14 +26,11 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   const [opened, setOpened] = useState(false);
   const hasHiddenColumns = allColumns.some((column) => !column.getIsVisible());
 
-  // Drag and drop state
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverItem, setDragOverItem] = useState<string | null>(null);
 
-  // Split columns into pinned and reorderable
   const pinnedColumns = allColumns.filter((col) => pinnedColumnIds.includes(col.id));
 
-  // Sort reorderable columns according to columnOrder (after pinned)
   const reorderableColumns = allColumns
     .filter((col) => !pinnedColumnIds.includes(col.id))
     .sort((a, b) => {
@@ -41,42 +39,35 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
       return aIdx - bIdx;
     });
 
-  // Handle drag start
   const handleDragStart = (e: React.DragEvent, columnId: string) => {
     setDraggedItem(columnId);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/html', columnId);
 
-    // Add some visual feedback
     if (e.currentTarget instanceof HTMLElement) {
       e.currentTarget.style.opacity = '0.5';
     }
   };
 
-  // Handle drag end
   const handleDragEnd = (e: React.DragEvent) => {
     setDraggedItem(null);
     setDragOverItem(null);
 
-    // Reset visual feedback
     if (e.currentTarget instanceof HTMLElement) {
       e.currentTarget.style.opacity = '1';
     }
   };
 
-  // Handle drag over
   const handleDragOver = (e: React.DragEvent, columnId: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     setDragOverItem(columnId);
   };
 
-  // Handle drag leave
   const handleDragLeave = () => {
     setDragOverItem(null);
   };
 
-  // Handle drop
   const handleDrop = (e: React.DragEvent, targetColumnId: string) => {
     e.preventDefault();
 
@@ -86,21 +77,17 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
       return;
     }
 
-    // Get current reorderable column IDs
     const reorderableIds = reorderableColumns.map((col) => col.id);
 
-    // Find indices
     const draggedIndex = reorderableIds.indexOf(draggedItem);
     const targetIndex = reorderableIds.indexOf(targetColumnId);
 
     if (draggedIndex === -1 || targetIndex === -1) return;
 
-    // Create new order
     const newOrder = [...reorderableIds];
     const [removed] = newOrder.splice(draggedIndex, 1);
     newOrder.splice(targetIndex, 0, removed);
 
-    // Update column order with pinned columns first
     setColumnOrder([...pinnedColumnIds, ...newOrder]);
 
     setDraggedItem(null);
@@ -143,9 +130,11 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
         onClick={() => setOpened(!opened)}
         variant="outline"
         color="#687aaf"
-        style={{ borderRadius: '8px', backgroundColor: '#f9fafc' }}
+        size="xs"
+        leftSection={<MdOutlineSettingsInputComponent size={16} />}
+        style={{ padding: '6px', borderRadius: '8px', backgroundColor: '#f9fafc' }}
       >
-        <MdSettings size={18} />
+        בחירת שדות
       </Button>
 
       {opened && (
@@ -154,7 +143,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
             position: 'absolute',
             top: 'calc(100% + 10px)',
             left: 0,
-            width: 280,
+            width: 250,
             backgroundColor: 'white',
             borderRadius: 8,
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
@@ -180,11 +169,10 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                 </Button>
                 <Button
                   size="xs"
-                  color="blue"
                   variant="filled"
-                  leftSection={<MdCheck size={14} />}
+                  leftSection={<MdCheck size={12} />}
                   onClick={() => setOpened(false)}
-                  style={{ backgroundColor: 'rgb(31, 58, 138)' }}
+                  style={{ backgroundColor: 'rgb(31, 58, 138)', padding: '2px 4px' }}
                 >
                   אישור
                 </Button>
@@ -199,7 +187,6 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
               direction: 'rtl',
             }}
           >
-            {/* Render pinned columns (not draggable, not hideable) */}
             {pinnedColumns.map((column) => {
               const header =
                 typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id;
@@ -225,7 +212,6 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
               );
             })}
 
-            {/* Render reorderable columns (draggable, hideable) */}
             {reorderableColumns.map((column, index) => {
               const isVisible = !(column.id in columnVisibility);
               const header =
@@ -244,7 +230,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, column.id)}
                   style={{
-                    padding: '12px 16px',
+                    padding: '8px 10px',
                     borderBottom: '1px solid #f0f0f0',
                     backgroundColor: isDraggedOver ? '#e3f2fd' : isDragging ? '#f5f5f5' : 'white',
                     display: 'flex',
@@ -265,32 +251,38 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                       flex: 1,
                     }}
                     onClick={(e) => {
-                      e.stopPropagation(); // Prevent drag when clicking checkbox
+                      e.stopPropagation();
                       toggleColumnVisibility(column.id);
                     }}
                   >
-                    <input type="checkbox" checked={isVisible} readOnly style={{ marginLeft: 8 }} />
+                    <div
+                      style={{
+                        cursor: 'grab',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                      onMouseDown={(e) => {
+                        e.currentTarget.style.cursor = 'grabbing';
+                      }}
+                      onMouseUp={(e) => {
+                        e.currentTarget.style.cursor = 'grab';
+                      }}
+                    >
+                      <RxDragHandleHorizontal size={18} color="#1f3a8a" />
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={isVisible}
+                      readOnly
+                      style={{
+                        marginLeft: 12,
+                        accentColor: '#1f3a8a',
+                        width: '14px',
+                        height: '14px',
+                      }}
+                    />
                     <span>{header}</span>
-                  </div>
-
-                  {/* Drag handle */}
-                  <div
-                    style={{
-                      cursor: 'grab',
-                      padding: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                    }}
-                    onMouseDown={(e) => {
-                      // Change cursor to grabbing when mouse down
-                      e.currentTarget.style.cursor = 'grabbing';
-                    }}
-                    onMouseUp={(e) => {
-                      // Reset cursor when mouse up
-                      e.currentTarget.style.cursor = 'grab';
-                    }}
-                  >
-                    <MdDragIndicator size={16} color="#666" />
                   </div>
                 </div>
               );

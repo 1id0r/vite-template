@@ -337,14 +337,15 @@ export const FolderActions: React.FC<FolderActionsProps> = ({
       <Menu.Target>
         <Button
           variant="outline"
-          size="sm"
+          size="xs"
           color="#687aaf"
           style={{
             borderRadius: '8px',
             backgroundColor: '#f9fafc',
+            padding: '8px',
           }}
         >
-          <MdCreateNewFolder size={16} />
+          <MdCreateNewFolder size={18} />
         </Button>
       </Menu.Target>
       <Menu.Dropdown>
