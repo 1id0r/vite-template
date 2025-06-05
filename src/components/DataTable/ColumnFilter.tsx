@@ -63,13 +63,15 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
     return (
       <Popover position="bottom" shadow="md" withinPortal>
         <Popover.Target>
-          <ActionIcon size="sm" variant="subtle" color="gray">
+          <ActionIcon size="md" variant="subtle" color="gray">
             <MdFilterList size={16} />
           </ActionIcon>
         </Popover.Target>
         <Popover.Dropdown>
           <Stack>
-            <Text size="sm">Filter {column.columnDef.header}</Text>
+            <Text dir="rtl" size="sm">
+              פילטר {column.columnDef.header}
+            </Text>
             <Select
               placeholder="Select value"
               value={columnFilterValue?.toString() || ''}
@@ -106,7 +108,7 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
   return (
     <Popover position="bottom" shadow="md" withinPortal>
       <Popover.Target>
-        <ActionIcon size="sm" variant="subtle" color="gray">
+        <ActionIcon size="md" variant="subtle" color="gray">
           <MdFilterList size={16} />
         </ActionIcon>
       </Popover.Target>

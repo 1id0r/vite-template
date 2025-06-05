@@ -329,7 +329,7 @@ export function DataTable() {
   const rowVirtualizer = useVirtualizer({
     count: tableRows.length,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: useCallback(() => 76, []),
+    estimateSize: useCallback(() => 61, []),
     overscan: 5,
     measureElement:
       typeof window !== 'undefined' && navigator.userAgent.indexOf('Firefox') === -1
@@ -687,7 +687,7 @@ export function DataTable() {
                       width: `${header.getSize()}px`,
                       minWidth: `${header.getSize()}px`,
                       maxWidth: `${header.getSize()}px`,
-                      padding: '12px 16px',
+                      padding: '4px 8px',
                       fontWeight: 500,
                       backgroundColor: 'white',
                       borderLeft: 'none',
@@ -808,7 +808,7 @@ export function DataTable() {
                     height: `${virtualRow.size}px`,
                     display: 'flex',
                     direction: 'rtl',
-                    paddingBottom: '4px',
+                    paddingBottom: '2px',
                     paddingRight: '0px',
                     transform: `translateY(${virtualRow.start}px) ${row.getIsSelected() ? 'scale(0.99)' : 'scale(1)'}`,
                     transition: 'opacity 0.1s ease, transform 0.1s ease',
