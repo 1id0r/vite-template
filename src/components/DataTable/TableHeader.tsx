@@ -182,7 +182,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                 <MdDownload size={18} />
               </ActionIcon>
             </Menu.Target>
-            <Menu.Dropdown>
+            <Menu.Dropdown style={{ direction: 'rtl', textAlign: 'right' }}>
               {/* Export Selected - only show if rows are selected */}
               {hasSelectedRows && (
                 <>
@@ -192,23 +192,35 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                       <Text>ייצא נבחרים ({selectedRows.length})</Text>
                     </Group>
                   </Menu.Label>
-                  <Menu.Item onClick={() => exportSelected('csv')}>CSV קובץ</Menu.Item>
-                  <Menu.Item onClick={() => exportSelected('json')}>JSON קובץ</Menu.Item>
+                  <Menu.Item onClick={() => exportSelected('csv')}>
+                    <Text style={{ direction: 'rtl', textAlign: 'right' }}>קובץ CSV</Text>
+                  </Menu.Item>
+                  <Menu.Item onClick={() => exportSelected('json')}>
+                    <Text style={{ direction: 'rtl', textAlign: 'right' }}>קובץ JSON</Text>
+                  </Menu.Item>
                   <Menu.Divider />
                 </>
               )}
 
               {/* Export All */}
               <Menu.Label>ייצוא כל הנתונים</Menu.Label>
-              <Menu.Item onClick={() => exportAll('csv')}>CSV - כל הנתונים</Menu.Item>
-              <Menu.Item onClick={() => exportAll('json')}>JSON - כל הנתונים</Menu.Item>
+              <Menu.Item onClick={() => exportAll('csv')}>
+                <Text style={{ direction: 'rtl', textAlign: 'right' }}>כל הנתונים - CSV</Text>
+              </Menu.Item>
+              <Menu.Item onClick={() => exportAll('json')}>
+                <Text style={{ direction: 'rtl', textAlign: 'right' }}>כל הנתונים - JSON</Text>
+              </Menu.Item>
 
               <Menu.Divider />
 
               {/* Export Filtered */}
               <Menu.Label>ייצוא נתונים מסוננים</Menu.Label>
-              <Menu.Item onClick={() => exportFiltered('csv')}>CSV - נתונים מסוננים</Menu.Item>
-              <Menu.Item onClick={() => exportFiltered('json')}>JSON - נתונים מסוננים</Menu.Item>
+              <Menu.Item onClick={() => exportFiltered('csv')}>
+                <Text style={{ direction: 'rtl', textAlign: 'right' }}>נתונים מסוננים - CSV</Text>
+              </Menu.Item>
+              <Menu.Item onClick={() => exportFiltered('json')}>
+                <Text style={{ direction: 'rtl', textAlign: 'right' }}>נתונים מסוננים - JSON</Text>
+              </Menu.Item>
 
               <Menu.Divider />
 

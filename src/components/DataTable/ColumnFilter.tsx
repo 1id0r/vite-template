@@ -63,7 +63,7 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
     return (
       <Popover position="bottom" shadow="md" withinPortal>
         <Popover.Target>
-          <ActionIcon size="md" variant="subtle" color="gray">
+          <ActionIcon size="sm" variant="subtle" color="gray">
             <MdFilterList size={16} />
           </ActionIcon>
         </Popover.Target>

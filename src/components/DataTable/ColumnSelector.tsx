@@ -184,6 +184,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                   variant="filled"
                   leftSection={<MdCheck size={14} />}
                   onClick={() => setOpened(false)}
+                  style={{ backgroundColor: 'rgb(31, 58, 138)' }}
                 >
                   אישור
                 </Button>
