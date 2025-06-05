@@ -1,7 +1,6 @@
-// Badges.tsx - All badge components
 import React from 'react';
+import { IconExclamationMark, IconInfoCircle, IconX } from '@tabler/icons-react';
 import { Badge } from '@mantine/core';
-import { IconX, IconExclamationMark, IconInfoCircle } from '@tabler/icons-react';
 import {
   DataItem,
   environmentColorMap,
@@ -67,19 +66,19 @@ export const SeverityBadge = ({ severity }: { severity: DataItem['severity'] }) 
   };
 
   return (
-    <Badge 
-      color={severityColorMap[severity]} 
-      variant="light" 
-      radius="md" 
+    <Badge
+      color={severityColorMap[severity]}
+      variant="light"
+      radius="md"
       size="sm"
-      style={{ 
+      style={{
         border: `1px solid ${getBorderColor(severity)}`,
         backgroundColor: 'transparent',
         display: 'inline-flex',
         alignItems: 'center',
         gap: '2px',
         padding: '0 8px',
-        height: '20px'
+        height: '20px',
       }}
     >
       {getIcon(severity)}

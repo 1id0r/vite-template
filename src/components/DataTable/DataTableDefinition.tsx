@@ -1,4 +1,3 @@
-// DataTableDefinition.tsx - Column definitions with selection
 import React from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { Checkbox, Text, Tooltip } from '@mantine/core';
@@ -61,7 +60,8 @@ export const createColumns = () => [
     ),
     enableColumnFilter: true,
     size: 300,
-  }), columnHelper.accessor('severity', {
+  }),
+  columnHelper.accessor('severity', {
     header: 'חומרה',
     cell: (info) => <SeverityBadge severity={info.getValue()} />,
     enableColumnFilter: true,
@@ -132,6 +132,4 @@ export const createColumns = () => [
     },
     size: 250,
   }),
-
- 
 ];

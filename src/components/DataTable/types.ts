@@ -1,7 +1,5 @@
 // types.ts - Data types and interfaces with folder support
 
-import { borderResolver } from "@mantine/core/lib/core/Box/style-props/resolvers/border-resolver/border-resolver";
-
 // Define the data type for our table
 export type DataItem = {
   id: string;
@@ -10,24 +8,26 @@ export type DataItem = {
   hierarchy: string;
   lastUpdated: string;
   startTime: string;
-  status: 'active' | 'inactive' | 'pending' | 'resolved';
+  status: 'active' | 'inactive' | 'pending' | 'resolved'; // Re-added status field
   impact: 'high' | 'medium' | 'low';
   environment: 'production' | 'staging' | 'development';
   origin: string;
   snId: string;
   identities: string[];
-  isNew?: boolean;
   severity: 'warning' | 'major' | 'critical';
   isInFolder?: boolean; // Add this property for items inside folders
 };
 
 // Folder type
 export type FolderItem = {
-id: string;
-name: string;
-type: 'folder';
-isExpanded: boolean;
-rowIds: string[]; // IDs of rows in this folder
+  id: string;
+  name: string;
+  type: 'folder';
+  isExpanded: boolean;
+  rowIds: string[]; // IDs of rows in this folder
+  criticalCount: number;
+  majorCount: number;
+  warningCount: number;
 };
 
 // Combined type for table display
@@ -80,25 +80,23 @@ export const severityColorMap = {
 export const getRowStyleBySeverity = (severity: DataItem['severity']) => {
   if (severity === 'critical') {
     return {
-      backgroundColor: '#fff3f3', // Light red for critical severity
-      boxShadow: '0 1px 1px rgba(0,0,0,0.2)',
-      
+      backgroundColor: '#fcd4d4', // Set background color to #fcd4d4 for critical severity
+      border: '1px solid #f0b0b0', // Darker red border
     };
   } else if (severity === 'major') {
     return {
-      backgroundColor: '#fff8b7', // Light yellow for major severity
-      boxShadow: '0 1px 1px rgba(255, 248, 183,0.2)',
-      // borderfdd4d4
+      backgroundColor: '#fffac8', // Light yellow for major severity
+      border: '1px solid #e0d5a1', // Darker yellow border
     };
   } else if (severity === 'warning') {
     return {
-      backgroundColor: '#b5e1ff', // Light blue for warning severity
-      boxShadow: '0 1px 1px rgba(0,0,0,0.4)',
+      backgroundColor: '#f0f9ff', // Light blue for warning severity
+      border: '1px solid #a0c3e0', // Darker blue border
     };
   } else {
     return {
       backgroundColor: 'white',
-      boxShadow: '0 1px 1px rgba(0,0,0,0.4)',
+      border: '1px solid #e0e0e0', // Grey border for default
     };
   }
 };

@@ -1,4 +1,3 @@
-// ColumnFilter.tsx - Column filtering component with TableRow support
 import React, { useMemo } from 'react';
 import { IconFilter } from '@tabler/icons-react';
 import { ActionIcon, Popover, Select, Stack, Text, TextInput } from '@mantine/core';
@@ -45,7 +44,7 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
         new Set(
           dataRows
             .map((row: any) => row.getValue(column.id))
-            .filter((value) => value !== null && value !== undefined && value !== '') // Filter out empty values
+            .filter((value: any) => value !== null && value !== undefined && value !== '') // Filter out empty values
         )
       ).sort();
     }

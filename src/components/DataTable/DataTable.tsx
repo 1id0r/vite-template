@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { IconX } from '@tabler/icons-react';
+import { IconFolderPlus, IconX } from '@tabler/icons-react';
 import {
   ColumnFiltersState,
   createColumnHelper,
@@ -13,7 +13,18 @@ import {
   VisibilityState,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { ActionIcon, Box, Checkbox, Group, Modal, Stack, Text, Tooltip } from '@mantine/core';
+import {
+  ActionIcon,
+  Badge,
+  Box,
+  Checkbox,
+  Group,
+  Menu,
+  Modal,
+  Stack,
+  Text,
+  Tooltip,
+} from '@mantine/core';
 import { ActiveFilters } from './ActiveFilters';
 import { EnvironmentBadge, ImpactBadge, SeverityBadge, StatusBadge } from './Badges';
 import { ColumnFilter } from './ColumnFilter';
@@ -80,6 +91,15 @@ export function DataTable() {
 
   const [selectedRow, setSelectedRow] = useState<DataItem | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  // State for context menu
+  const [contextMenuPosition, setContextMenuPosition] = useState<{ x: number; y: number } | null>(
+    null
+  );
+  const [contextMenuRowId, setContextMenuRowId] = useState<string | null>(null);
+
+  // New state to hold row IDs to move to a folder (from selection or context menu)
+  const [rowIdsToMove, setRowIdsToMove] = useState<string[]>([]);
 
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -168,7 +188,7 @@ export function DataTable() {
           if (isFolder(info.row.original)) return null;
           return <Text color="black">{info.getValue()}</Text>;
         },
-        enableColumnFilter: true,
+        enableColumnFilter: false,
         size: 250,
       }),
       columnHelper.accessor((row) => (isFolder(row) ? '' : row.lastUpdated), {
@@ -397,13 +417,95 @@ export function DataTable() {
     [originalData]
   );
 
-  // Helper to get row info for modal
+  // Helper to get row info for modal (on left click)
   const handleRowClick = (row: TableRow) => {
     if (!isFolder(row)) {
       setSelectedRow(row as DataItem);
       setModalOpen(true);
     }
   };
+
+  // Handle right-click on a row to open context menu
+  const handleContextMenu = (event: React.MouseEvent, rowId: string) => {
+    event.preventDefault(); // Prevent default browser context menu
+    setContextMenuPosition({ x: event.clientX, y: event.clientY });
+    setContextMenuRowId(rowId);
+  };
+
+  // Handle Add to Folder action from context menu
+  const handleAddToFolderFromContextMenu = () => {
+    if (contextMenuRowId) {
+      // Combine currently selected rows with the right-clicked row
+      const currentSelectionIds = Object.keys(rowSelection); // Get IDs from rowSelection state
+      const idsToMove = new Set([...currentSelectionIds, contextMenuRowId]);
+      setRowIdsToMove(Array.from(idsToMove));
+      setAddToFolderModalOpen(true);
+    }
+    setContextMenuPosition(null); // Close the context menu
+    setContextMenuRowId(null);
+  };
+
+  // Handle Remove from Folder action
+  const handleRemoveFromFolder = useCallback(
+    (rowId: string) => {
+      setFolderState((prev) => {
+        // Find the folder the item is in
+        const folderContainingItem = prev.folders.find((folder) => folder.rowIds.includes(rowId));
+
+        if (!folderContainingItem) {
+          // Item is not in a folder, do nothing
+          return prev;
+        }
+
+        // Find the original data item to get its severity for count updates
+        const originalDataItem = originalData.find((item) => item.id === rowId);
+
+        const newState = {
+          ...prev,
+          folders: prev.folders.map((folder) => {
+            if (folder.id === folderContainingItem.id) {
+              // Remove the item from the folder's rowIds list and update counts
+              return {
+                ...folder,
+                rowIds: folder.rowIds.filter((id) => id !== rowId),
+                criticalCount:
+                  folder.criticalCount - (originalDataItem?.severity === 'critical' ? 1 : 0),
+                majorCount: folder.majorCount - (originalDataItem?.severity === 'major' ? 1 : 0),
+                warningCount:
+                  folder.warningCount - (originalDataItem?.severity === 'warning' ? 1 : 0),
+              };
+            }
+            return folder;
+          }),
+          unassignedRows: [
+            ...prev.unassignedRows,
+            originalDataItem!, // Add the item back to unassigned rows
+          ].filter(Boolean) as DataItem[], // Filter out any undefined in case item is not found (shouldn't happen)
+        };
+
+        setTableVersion((v) => v + 1); // Trigger re-render
+        return newState;
+      });
+      // Clear selection and context menu after action
+      setRowSelection({});
+      setContextMenuPosition(null);
+      setContextMenuRowId(null);
+    },
+    [originalData] // Depend on originalData to find the severity
+  );
+
+  // Close context menu when clicking elsewhere
+  useEffect(() => {
+    if (!contextMenuPosition) return;
+
+    const handleClick = () => {
+      setContextMenuPosition(null);
+      setContextMenuRowId(null);
+    };
+
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [contextMenuPosition]);
 
   useEffect(() => {
     if (!tableOuterContainerRef.current) return;
@@ -480,6 +582,61 @@ export function DataTable() {
             <Text>חומרה: {selectedRow.severity}</Text>
           </Stack>
         </Box>
+      )}
+
+      {/* Context Menu */}
+      {contextMenuPosition && (
+        <Menu
+          opened={!!contextMenuPosition}
+          onClose={() => setContextMenuPosition(null)}
+          position="bottom-start"
+          offset={0} // Offset relative to mouse position
+          styles={{
+            dropdown: {
+              // Use 'dropdown' key for styling the dropdown panel
+              position: 'fixed',
+              top: contextMenuPosition.y,
+              left: contextMenuPosition.x,
+              zIndex: 1000, // Ensure it's above other elements
+            },
+          }}
+          withArrow
+        >
+          <Menu.Target>
+            {/* This target is just to anchor the menu, not visible */}
+            <div
+              style={{
+                position: 'fixed',
+                top: contextMenuPosition.y,
+                left: contextMenuPosition.x,
+                width: 1,
+                height: 1,
+                zIndex: -1,
+              }}
+            />
+          </Menu.Target>
+          <Menu.Dropdown>
+            {contextMenuRowId &&
+              !folderState.folders.some((folder) => folder.rowIds.includes(contextMenuRowId)) && (
+                <Menu.Item
+                  leftSection={<IconFolderPlus size={14} />}
+                  onClick={handleAddToFolderFromContextMenu}
+                >
+                  הוסף לתיקייה
+                </Menu.Item>
+              )}
+            {contextMenuRowId &&
+              folderState.folders.some((folder) => folder.rowIds.includes(contextMenuRowId)) && (
+                <Menu.Item
+                  leftSection={<IconX size={14} />}
+                  onClick={() => handleRemoveFromFolder(contextMenuRowId)}
+                >
+                  הסר מתיקייה
+                </Menu.Item>
+              )}
+            {/* Add other context menu items here */}
+          </Menu.Dropdown>
+        </Menu>
       )}
 
       <div
@@ -628,7 +785,7 @@ export function DataTable() {
           <div
             style={{
               height: `${rowVirtualizer.getTotalSize()}px`,
-              width: totalWidth < containerWidth ? '100%' : `${totalWidth}px`,
+              width: `${totalWidth}px`,
               minWidth: 'unset',
               position: 'relative',
             }}
@@ -651,12 +808,14 @@ export function DataTable() {
                     height: `${virtualRow.size}px`,
                     display: 'flex',
                     direction: 'rtl',
-                    paddingBottom: '8px',
+                    paddingBottom: '4px',
+                    paddingRight: '0px',
                     transform: `translateY(${virtualRow.start}px) ${row.getIsSelected() ? 'scale(0.99)' : 'scale(1)'}`,
                     transition: 'opacity 0.1s ease, transform 0.1s ease',
                     cursor: !isRowFolder ? 'pointer' : undefined,
                   }}
                   onClick={() => handleRowClick(row.original)}
+                  onContextMenu={(e) => !isRowFolder && handleContextMenu(e, row.original.id)} // Add right-click handler
                 >
                   <div
                     style={{
@@ -754,10 +913,29 @@ export function DataTable() {
 
       <AddToFolderModal
         opened={addToFolderModalOpen}
-        onClose={() => setAddToFolderModalOpen(false)}
-        onAddToFolder={handleAddToFolder}
+        onClose={() => {
+          setAddToFolderModalOpen(false);
+          // Clear temporary state used for context menu or header action
+          setRowIdsToMove([]);
+          setContextMenuRowId(null);
+          setContextMenuPosition(null);
+        }}
+        onAddToFolder={(folderId) => {
+          const idsToMove = rowIdsToMove.length > 0 ? rowIdsToMove : selectionInfo.selectedRowIds; // Use rowIdsToMove if set, otherwise use selectionInfo
+          if (idsToMove.length > 0) {
+            setFolderState((prev) => moveRowsToFolder(prev, idsToMove, folderId));
+            // Always clear selection after adding to folder
+            setRowSelection({});
+          }
+          setAddToFolderModalOpen(false);
+          setRowIdsToMove([]); // Clear rowIdsToMove after action
+          setContextMenuRowId(null); // Clear context menu row id
+          setContextMenuPosition(null); // Clear context menu position
+        }}
         folders={folderState.folders}
-        selectedCount={selectionInfo.selectedRowsCount}
+        selectedCount={
+          rowIdsToMove.length > 0 ? rowIdsToMove.length : selectionInfo.selectedRowsCount
+        } // Show count from rowIdsToMove or selectionInfo
       />
     </div>
   );

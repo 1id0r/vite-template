@@ -1,17 +1,28 @@
-// FolderComponents.tsx - UI components for folder functionality
-
 import React, { useState } from 'react';
 import {
   IconChevronDown,
   IconChevronRight,
   IconEdit,
+  IconExclamationMark,
   IconFolder,
   IconFolderPlus,
+  IconInfoCircle,
   IconPlus,
   IconTrash,
+  IconX,
 } from '@tabler/icons-react';
-import { ActionIcon, Button, Group, Menu, Modal, Select, Text, TextInput } from '@mantine/core';
-import { FolderItem } from './types';
+import {
+  ActionIcon,
+  Badge,
+  Button,
+  Group,
+  Menu,
+  Modal,
+  Select,
+  Text,
+  TextInput,
+} from '@mantine/core';
+import { FolderItem, severityColorMap } from './types';
 
 // Create Folder Modal
 interface CreateFolderModalProps {
@@ -170,8 +181,47 @@ export const FolderRow: React.FC<FolderRowProps> = ({
     }
   };
 
+  const getSeverityIcon = (severity: 'critical' | 'major' | 'warning') => {
+    // Adjust icon position slightly for better vertical alignment with text
+    // Add a small bottom margin to push the icon down.
+    // Based on user's previous manual edit, let's try marginBottom: -2
+    const iconStyle = { marginBottom: -2 };
+    switch (severity) {
+      case 'critical':
+        return <IconX size={12} style={iconStyle} />;
+      case 'major':
+        return <IconExclamationMark size={12} style={iconStyle} />;
+      case 'warning':
+        return <IconInfoCircle size={12} style={iconStyle} />;
+      default:
+        return null;
+    }
+  };
+
+  const getSeverityColor = (severity: 'critical' | 'major' | 'warning') => {
+    switch (severity) {
+      case 'critical':
+        return '#fff3f3'; // Light red color for critical severity border, matching row background
+      case 'major':
+        return '#fff8b7'; // Light yellow color for major severity border, matching row background
+      case 'warning':
+        return '#b5e1ff'; // Light blue color for warning severity border, matching row background
+      default:
+        return severityColorMap[severity];
+    }
+  };
+
   return (
-    <Group gap="xs" wrap="nowrap" style={{ width: '100%' }}>
+    <Group
+      gap="xs"
+      wrap="nowrap"
+      style={{
+        width: '100%',
+        borderRadius: '4px',
+        // padding: isExpanded ? '8px' : '0', // Add padding when border is present
+        // marginBottom: isExpanded ? '8px' : '0', // Add margin below when expanded
+      }}
+    >
       <ActionIcon variant="subtle" size="sm" onClick={() => onToggleExpansion(folder.id)}>
         {isExpanded ? <IconChevronDown size={18} /> : <IconChevronRight size={18} />}
       </ActionIcon>
@@ -190,11 +240,75 @@ export const FolderRow: React.FC<FolderRowProps> = ({
         />
       ) : (
         <Text fw={500} onClick={() => setIsEditing(true)} style={{ cursor: 'pointer' }}>
-          {folder.name} ({folder.rowIds.length})
+          {folder.name}
         </Text>
       )}
 
-      {/* Edit and Delete icons right next to the name */}
+      {/* Severity badges with counts */}
+      <Group gap={4} style={{ flexShrink: 0 }}>
+        {folder.criticalCount > 0 && (
+          <Badge
+            color={severityColorMap.critical}
+            variant="light"
+            radius="xl"
+            size="sm"
+            style={{
+              border: `2px solid ${getSeverityColor('critical')}`,
+              backgroundColor: 'transparent',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '2px',
+              padding: '0 8px',
+              height: '20px',
+            }}
+          >
+            {getSeverityIcon('critical')}
+            {folder.criticalCount}
+          </Badge>
+        )}
+        {folder.majorCount > 0 && (
+          <Badge
+            color={severityColorMap.major}
+            variant="light"
+            radius="xl"
+            size="sm"
+            style={{
+              border: `2px solid ${getSeverityColor('major')}`,
+              backgroundColor: 'transparent',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '2px',
+              padding: '0 8px',
+              height: '20px',
+            }}
+          >
+            {getSeverityIcon('major')}
+            {folder.majorCount}
+          </Badge>
+        )}
+        {folder.warningCount > 0 && (
+          <Badge
+            color={severityColorMap.warning}
+            variant="light"
+            radius="xl"
+            size="sm"
+            style={{
+              border: `2px solid ${getSeverityColor('warning')}`,
+              backgroundColor: 'transparent',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '2px',
+              padding: '0 8px',
+              height: '20px',
+            }}
+          >
+            {getSeverityIcon('warning')}
+            {folder.warningCount}
+          </Badge>
+        )}
+      </Group>
+
+      {/* Edit and Delete icons */}
       <ActionIcon variant="subtle" size="md" onClick={() => setIsEditing(true)} color="blue">
         <IconEdit size={18} />
       </ActionIcon>
@@ -221,7 +335,17 @@ export const FolderActions: React.FC<FolderActionsProps> = ({
   return (
     <Menu shadow="md" width={200}>
       <Menu.Target>
-        <Button leftSection={<IconFolderPlus size={16} />} variant="subtle" size="sm"></Button>
+        <Button
+          variant="outline"
+          size="sm"
+          color="#687aaf"
+          style={{
+            borderRadius: '8px',
+            backgroundColor: '#f9fafc',
+          }}
+        >
+          <IconFolderPlus size={16} />
+        </Button>
       </Menu.Target>
       <Menu.Dropdown>
         <Menu.Label>פעולות תיקיות</Menu.Label>

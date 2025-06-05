@@ -1,4 +1,3 @@
-// mockData.ts - Mock data generation functions
 import { DataItem } from './types';
 
 // Generate mock data
@@ -31,3 +30,5 @@ export const generateMockData = (): DataItem[] => {
     severity: severities[Math.floor(Math.random() * severities.length)],
   }));
 };
+
+

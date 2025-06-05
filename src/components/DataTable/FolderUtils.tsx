@@ -1,5 +1,3 @@
-// FolderUtils.ts - Utilities for folder management
-
 import { DataItem, FolderItem, FolderState, TableRow } from './types';
 
 const STORAGE_KEY = 'table-folders';
@@ -56,8 +54,27 @@ export const generateTableRows = (folderState: FolderState, allData: DataItem[])
 
   // Add folders and their contents
   folderState.folders.forEach((folder) => {
-    // Add folder row
-    rows.push(folder);
+    // Calculate severity counts for the folder
+    let criticalCount = 0;
+    let majorCount = 0;
+    let warningCount = 0;
+
+    folder.rowIds.forEach((rowId) => {
+      const dataItem = dataMap.get(rowId);
+      if (dataItem) {
+        if (dataItem.severity === 'critical') criticalCount++;
+        else if (dataItem.severity === 'major') majorCount++;
+        else if (dataItem.severity === 'warning') warningCount++;
+      }
+    });
+
+    // Add folder row with counts
+    rows.push({
+      ...folder,
+      criticalCount,
+      majorCount,
+      warningCount,
+    } as FolderItem);
 
     // If folder is expanded, add its rows
     if (folderState.expandedFolders.has(folder.id)) {
@@ -86,6 +103,10 @@ export const createFolder = (folderState: FolderState, folderName: string): Fold
     type: 'folder',
     isExpanded: false,
     rowIds: [],
+    // Initialize new severity counts
+    criticalCount: 0,
+    majorCount: 0,
+    warningCount: 0,
   };
 
   const newState = {

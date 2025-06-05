@@ -1,4 +1,3 @@
-// ActiveFilters.tsx - Active filters display
 import React from 'react';
 import { ActionIcon, Badge, Button, Group, Text } from '@mantine/core';
 

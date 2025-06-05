@@ -1,4 +1,3 @@
-// ExportControls.tsx - Export functionality component
 import React from 'react';
 import { IconDownload, IconFileExport } from '@tabler/icons-react';
 import { Button, Group, Menu, Text } from '@mantine/core';

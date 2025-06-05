@@ -1,4 +1,3 @@
-// TableHeader.tsx - Table header with search, controls, export and folders (RTL)
 import React from 'react';
 import { IconDownload, IconFileExport, IconSearch } from '@tabler/icons-react';
 import { ActionIcon, Group, Menu, Select, Text, TextInput } from '@mantine/core';
@@ -173,7 +172,13 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
           {/* Export Menu */}
           <Menu shadow="md" width={220} position="bottom-end">
             <Menu.Target>
-              <ActionIcon variant="subtle" size="md" aria-label="Export data">
+              <ActionIcon
+                variant="outline"
+                size="md"
+                aria-label="Export data"
+                color="#687aaf"
+                style={{ backgroundColor: '#f9fafc', borderRadius: '8px' }}
+              >
                 <IconDownload size={18} />
               </ActionIcon>
             </Menu.Target>
