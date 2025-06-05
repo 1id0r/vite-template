@@ -15,7 +15,7 @@ export const ActiveFilters: React.FC<ActiveFiltersProps> = ({ table, setColumnFi
   return (
     <Group gap="xs" mb="md">
       <Text size="sm" fw={500}>
-        Active filters:
+        פילטרים פעילים:
       </Text>
       {table.getState().columnFilters.map((filter: any) => {
         const column = table.getColumn(filter.id);
@@ -39,7 +39,7 @@ export const ActiveFilters: React.FC<ActiveFiltersProps> = ({ table, setColumnFi
         );
       })}
       <Button variant="subtle" size="xs" onClick={() => setColumnFilters([])}>
-        Clear All
+        נקה הכל
       </Button>
     </Group>
   );

@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconDownload, IconFileExport, IconSearch } from '@tabler/icons-react';
+import { MdDownload, MdFileUpload, MdSearch } from 'react-icons/md';
 import { ActionIcon, Group, Menu, Select, Text, TextInput } from '@mantine/core';
 import { ColumnSelector } from './ColumnSelector';
 import { FolderActions } from './FolderComponents';
@@ -153,7 +153,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
             placeholder="חיפוש בכל העמודות..."
             value={globalFilter ?? ''}
             onChange={(event) => setGlobalFilter(event.currentTarget.value)}
-            leftSection={<IconSearch size={16} />}
+            leftSection={<MdSearch size={16} />}
             style={{ width: '250px', borderRadius: 'px' }}
           />
           <ColumnSelector
@@ -179,7 +179,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                 color="#687aaf"
                 style={{ backgroundColor: '#f9fafc', borderRadius: '8px' }}
               >
-                <IconDownload size={18} />
+                <MdDownload size={18} />
               </ActionIcon>
             </Menu.Target>
             <Menu.Dropdown>
@@ -188,7 +188,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                 <>
                   <Menu.Label>
                     <Group gap="xs">
-                      <IconFileExport size={14} />
+                      <MdFileUpload size={14} />
                       <Text>ייצא נבחרים ({selectedRows.length})</Text>
                     </Group>
                   </Menu.Label>

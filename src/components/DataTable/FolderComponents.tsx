@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import {
-  IconChevronDown,
-  IconChevronRight,
-  IconEdit,
-  IconExclamationMark,
-  IconFolder,
-  IconFolderPlus,
-  IconInfoCircle,
-  IconPlus,
-  IconTrash,
-  IconX,
-} from '@tabler/icons-react';
+  MdAdd,
+  MdCancel,
+  MdCreateNewFolder,
+  MdDelete,
+  MdEdit,
+  MdFolder,
+  MdInfo,
+  MdKeyboardArrowDown,
+  MdKeyboardArrowRight,
+  MdWarning,
+} from 'react-icons/md';
 import {
   ActionIcon,
   Badge,
@@ -188,11 +188,11 @@ export const FolderRow: React.FC<FolderRowProps> = ({
     const iconStyle = { marginBottom: -2 };
     switch (severity) {
       case 'critical':
-        return <IconX size={12} style={iconStyle} />;
+        return <MdCancel size={12} style={iconStyle} />;
       case 'major':
-        return <IconExclamationMark size={12} style={iconStyle} />;
+        return <MdWarning size={12} style={iconStyle} />;
       case 'warning':
-        return <IconInfoCircle size={12} style={iconStyle} />;
+        return <MdInfo size={12} style={iconStyle} />;
       default:
         return null;
     }
@@ -223,10 +223,10 @@ export const FolderRow: React.FC<FolderRowProps> = ({
       }}
     >
       <ActionIcon variant="subtle" size="sm" onClick={() => onToggleExpansion(folder.id)}>
-        {isExpanded ? <IconChevronDown size={18} /> : <IconChevronRight size={18} />}
+        {isExpanded ? <MdKeyboardArrowDown size={18} /> : <MdKeyboardArrowRight size={18} />}
       </ActionIcon>
 
-      <IconFolder size={18} color="black" />
+      <MdFolder size={18} color="black" />
 
       {isEditing ? (
         <TextInput
@@ -310,11 +310,11 @@ export const FolderRow: React.FC<FolderRowProps> = ({
 
       {/* Edit and Delete icons */}
       <ActionIcon variant="subtle" size="md" onClick={() => setIsEditing(true)} color="blue">
-        <IconEdit size={18} />
+        <MdEdit size={18} />
       </ActionIcon>
 
       <ActionIcon variant="subtle" size="md" onClick={() => onDelete(folder.id)} color="red">
-        <IconTrash size={18} />
+        <MdDelete size={18} />
       </ActionIcon>
     </Group>
   );
@@ -344,16 +344,16 @@ export const FolderActions: React.FC<FolderActionsProps> = ({
             backgroundColor: '#f9fafc',
           }}
         >
-          <IconFolderPlus size={16} />
+          <MdCreateNewFolder size={16} />
         </Button>
       </Menu.Target>
       <Menu.Dropdown>
         <Menu.Label>פעולות תיקיות</Menu.Label>
-        <Menu.Item leftSection={<IconPlus size={16} />} onClick={onCreateFolder}>
+        <Menu.Item leftSection={<MdAdd size={16} />} onClick={onCreateFolder}>
           צור תיקייה חדשה
         </Menu.Item>
         {hasSelectedRows && (
-          <Menu.Item leftSection={<IconFolder size={16} />} onClick={onAddToFolder}>
+          <Menu.Item leftSection={<MdFolder size={16} />} onClick={onAddToFolder}>
             הוסף נבחרים לתיקייה
           </Menu.Item>
         )}

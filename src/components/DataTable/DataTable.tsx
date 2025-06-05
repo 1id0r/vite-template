@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { IconFolderPlus, IconX } from '@tabler/icons-react';
 import {
   ColumnFiltersState,
   createColumnHelper,
@@ -13,6 +12,7 @@ import {
   VisibilityState,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
+import { MdCancel, MdCreateNewFolder } from 'react-icons/md';
 import {
   ActionIcon,
   Badge,
@@ -564,7 +564,7 @@ export function DataTable() {
               פרטי רשומה
             </Text>
             <ActionIcon onClick={() => setModalOpen(false)} variant="subtle">
-              <IconX />
+              <MdCancel />
             </ActionIcon>
           </Group>
           <Stack gap="xs">
@@ -619,7 +619,7 @@ export function DataTable() {
             {contextMenuRowId &&
               !folderState.folders.some((folder) => folder.rowIds.includes(contextMenuRowId)) && (
                 <Menu.Item
-                  leftSection={<IconFolderPlus size={14} />}
+                  leftSection={<MdCreateNewFolder size={14} />}
                   onClick={handleAddToFolderFromContextMenu}
                 >
                   הוסף לתיקייה
@@ -628,7 +628,7 @@ export function DataTable() {
             {contextMenuRowId &&
               folderState.folders.some((folder) => folder.rowIds.includes(contextMenuRowId)) && (
                 <Menu.Item
-                  leftSection={<IconX size={14} />}
+                  leftSection={<MdCancel size={14} />}
                   onClick={() => handleRemoveFromFolder(contextMenuRowId)}
                 >
                   הסר מתיקייה

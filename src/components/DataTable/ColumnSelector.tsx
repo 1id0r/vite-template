@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { IconCheck, IconGripVertical, IconSettings } from '@tabler/icons-react';
+import { MdCheck, MdDragIndicator, MdSettings } from 'react-icons/md';
 import { Button, Text } from '@mantine/core';
 
 interface ColumnSelectorProps {
@@ -145,7 +145,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
         color="#687aaf"
         style={{ borderRadius: '8px', backgroundColor: '#f9fafc' }}
       >
-        <IconSettings size={18} />
+        <MdSettings size={18} />
       </Button>
 
       {opened && (
@@ -182,7 +182,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                   size="xs"
                   color="blue"
                   variant="filled"
-                  leftSection={<IconCheck size={14} />}
+                  leftSection={<MdCheck size={14} />}
                   onClick={() => setOpened(false)}
                 >
                   אישור
@@ -289,7 +289,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                       e.currentTarget.style.cursor = 'grab';
                     }}
                   >
-                    <IconGripVertical size={16} color="#666" />
+                    <MdDragIndicator size={16} color="#666" />
                   </div>
                 </div>
               );

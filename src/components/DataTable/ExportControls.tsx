@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconDownload, IconFileExport } from '@tabler/icons-react';
+import { MdDownload, MdFileUpload } from 'react-icons/md';
 import { Button, Group, Menu, Text } from '@mantine/core';
 import { DataItem } from './types';
 
@@ -121,7 +121,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({ table, data }) =
       {hasSelectedRows && (
         <Menu shadow="md" width={200}>
           <Menu.Target>
-            <Button leftSection={<IconFileExport size={16} />} variant="outline" color="blue">
+            <Button leftSection={<MdFileUpload size={16} />} variant="outline" color="blue">
               ייצא נבחרים ({selectedRows.length})
             </Button>
           </Menu.Target>
@@ -136,7 +136,7 @@ export const ExportControls: React.FC<ExportControlsProps> = ({ table, data }) =
       {/* Export All/Filtered */}
       <Menu shadow="md" width={200}>
         <Menu.Target>
-          <Button leftSection={<IconDownload size={16} />} variant="filled">
+          <Button leftSection={<MdDownload size={16} />} variant="filled">
             ייצא נתונים
           </Button>
         </Menu.Target>

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { IconFilter } from '@tabler/icons-react';
+import { MdFilterList } from 'react-icons/md';
 import { ActionIcon, Popover, Select, Stack, Text, TextInput } from '@mantine/core';
 import { DataItem, isFolder } from './types';
 
@@ -64,7 +64,7 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
       <Popover position="bottom" shadow="md" withinPortal>
         <Popover.Target>
           <ActionIcon size="sm" variant="subtle" color="gray">
-            <IconFilter size={16} />
+            <MdFilterList size={16} />
           </ActionIcon>
         </Popover.Target>
         <Popover.Dropdown>
@@ -107,7 +107,7 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
     <Popover position="bottom" shadow="md" withinPortal>
       <Popover.Target>
         <ActionIcon size="sm" variant="subtle" color="gray">
-          <IconFilter size={16} />
+          <MdFilterList size={16} />
         </ActionIcon>
       </Popover.Target>
       <Popover.Dropdown>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { IconExclamationMark, IconInfoCircle, IconX } from '@tabler/icons-react';
+import { MdCancel, MdInfo, MdWarning } from 'react-icons/md';
 import { Badge } from '@mantine/core';
 import {
   DataItem,
@@ -55,11 +55,11 @@ export const SeverityBadge = ({ severity }: { severity: DataItem['severity'] }) 
     const iconStyle = { position: 'relative' as const, top: 2, marginLeft: 4 };
     switch (severity) {
       case 'critical':
-        return <IconX size={12} style={iconStyle} />;
+        return <MdCancel size={12} style={iconStyle} />;
       case 'major':
-        return <IconExclamationMark size={12} style={iconStyle} />;
+        return <MdWarning size={12} style={iconStyle} />;
       case 'warning':
-        return <IconInfoCircle size={12} style={iconStyle} />;
+        return <MdInfo size={12} style={iconStyle} />;
       default:
         return null;
     }
