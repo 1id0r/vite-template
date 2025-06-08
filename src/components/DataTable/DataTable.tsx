@@ -607,7 +607,6 @@ export function DataTable() {
                   הסר מתיקייה
                 </Menu.Item>
               )}
-            {/* Add other context menu items here */}
           </Menu.Dropdown>
         </Menu>
       )}
@@ -845,9 +844,10 @@ export function DataTable() {
                               width: `${cellWidth}px`,
                               minWidth: `${cellWidth}px`,
                               maxWidth: `${cellWidth}px`,
-                              padding: '16px',
+                              padding: '12px',
                               paddingRight:
-                                (row.original as any).isInFolder && isFirstCell ? '40px' : '16px',
+                                (row.original as any).isInFolder && isFirstCell ? '30px' : '16px',
+
                               backgroundColor: 'inherit',
                               borderTopRightRadius: isFirstCell ? '8px' : 0,
                               borderBottomRightRadius: isFirstCell ? '8px' : 0,

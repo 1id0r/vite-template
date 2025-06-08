@@ -343,7 +343,7 @@ export const FolderActions: React.FC<FolderActionsProps> = ({
         <Button
           variant="outline"
           size="xs"
-          color="#1f3a8a"
+          color="#687aaf"
           style={{
             borderRadius: '8px',
             backgroundColor: '#f9fafc',
