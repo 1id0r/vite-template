@@ -129,7 +129,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
       <Button
         onClick={() => setOpened(!opened)}
         variant="outline"
-        color="#687aaf"
+        color="#1f3a8a"
         size="xs"
         leftSection={<MdOutlineSettingsInputComponent size={16} />}
         style={{ padding: '6px', borderRadius: '8px', backgroundColor: '#f9fafc' }}
@@ -143,21 +143,20 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
             position: 'absolute',
             top: 'calc(100% + 10px)',
             left: 0,
-            width: 250,
+            width: 200,
             backgroundColor: 'white',
-            borderRadius: 8,
+            borderRadius: 16,
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
             zIndex: 100,
             overflow: 'hidden',
           }}
         >
           <div
-            style={{ padding: 16, backgroundColor: '#f8f9fa', borderBottom: '1px solid #e0e0e0' }}
+            style={{
+              padding: '8px 8px 0 2px',
+            }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text fw={600} size="sm">
-                הגדרות עמודות
-              </Text>
               <div style={{ display: 'flex', gap: 8 }}>
                 <Button
                   size="xs"
@@ -166,15 +165,6 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                   onClick={() => showAllColumns()}
                 >
                   אפס
-                </Button>
-                <Button
-                  size="xs"
-                  variant="filled"
-                  leftSection={<MdCheck size={12} />}
-                  onClick={() => setOpened(false)}
-                  style={{ backgroundColor: 'rgb(31, 58, 138)', padding: '2px 4px' }}
-                >
-                  אישור
                 </Button>
               </div>
             </div>
@@ -195,7 +185,6 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                   key={column.id}
                   style={{
                     padding: '12px 16px',
-                    backgroundColor: '#f8f9fa',
                     fontWeight: 600,
                     opacity: 0.7,
                     borderBottom: '1px solid #f0f0f0',
@@ -258,7 +247,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                     <div
                       style={{
                         cursor: 'grab',
-                        padding: '4px',
+                        padding: '2px',
                         display: 'flex',
                         alignItems: 'center',
                       }}
@@ -276,7 +265,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                       checked={isVisible}
                       readOnly
                       style={{
-                        marginLeft: 12,
+                        marginLeft: 8,
                         accentColor: '#1f3a8a',
                         width: '14px',
                         height: '14px',

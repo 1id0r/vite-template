@@ -117,7 +117,6 @@ export const ExportControls: React.FC<ExportControlsProps> = ({ table, data }) =
 
   return (
     <Group gap="xs">
-      {/* Export Selected */}
       {hasSelectedRows && (
         <Menu shadow="md" width={200}>
           <Menu.Target>

@@ -665,12 +665,12 @@ export function DataTable() {
                         width: `${headerWidth}px`,
                         minWidth: `${headerWidth}px`,
                         maxWidth: `${headerWidth}px`,
-                        padding: '4px 8px',
+                        padding: '2px 6px ',
                         fontWeight: 500,
                         backgroundColor: 'white',
                         borderLeft: 'none',
                         userSelect: 'none',
-                        textAlign: 'right',
+                        textAlign: 'center',
                         direction: 'rtl',
                         transition: 'background-color 0.2s ease',
                         display: 'flex',
@@ -787,8 +787,8 @@ export function DataTable() {
                     height: `${virtualRow.size}px`,
                     display: 'flex',
                     direction: 'rtl',
-                    paddingBottom: '2px',
-                    paddingRight: '0px',
+                    paddingBottom: '1px',
+                    paddingRight: '2px',
                     transform: `translateY(${virtualRow.start}px) ${row.getIsSelected() ? 'scale(0.99)' : 'scale(1)'}`,
                     transition: 'opacity 0.1s ease, transform 0.1s ease',
                     cursor: !isRowFolder ? 'pointer' : undefined,
@@ -811,11 +811,13 @@ export function DataTable() {
                       <div
                         style={{
                           width: '100%',
-                          padding: '16px',
-                          backgroundColor: 'inherit',
-                          borderRadius: '8px',
-                          textAlign: 'right',
+                          padding: '12px 16px',
+                          backgroundColor: 'white',
+                          border: '1px solid #1f3a8a',
+                          borderRadius: '16px',
+                          boxShadow: '0 2px 2px rgba(33, 150, 243, 0.2)',
                           direction: 'rtl',
+                          position: 'relative',
                         }}
                       >
                         <FolderRow

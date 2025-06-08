@@ -60,7 +60,13 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
   };
 
   return (
-    <Modal opened={opened} onClose={handleClose} title="צור תיקייה חדשה" size="sm">
+    <Modal
+      style={{ direction: 'rtl', textAlign: 'right' }}
+      opened={opened}
+      onClose={handleClose}
+      title="צור תיקייה חדשה"
+      size="sm"
+    >
       <div style={{ direction: 'rtl' }}>
         <TextInput
           label="שם התיקייה"
@@ -71,7 +77,7 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
           style={{ marginBottom: '1rem' }}
           data-autofocus
         />
-        <Group justify="flex-end" gap="sm">
+        <Group justify="flex-start" gap="sm">
           <Button variant="subtle" onClick={handleClose}>
             ביטול
           </Button>
@@ -308,7 +314,6 @@ export const FolderRow: React.FC<FolderRowProps> = ({
         )}
       </Group>
 
-      {/* Edit and Delete icons */}
       <ActionIcon variant="subtle" size="md" onClick={() => setIsEditing(true)} color="blue">
         <MdEdit size={18} />
       </ActionIcon>
@@ -338,7 +343,7 @@ export const FolderActions: React.FC<FolderActionsProps> = ({
         <Button
           variant="outline"
           size="xs"
-          color="#687aaf"
+          color="#1f3a8a"
           style={{
             borderRadius: '8px',
             backgroundColor: '#f9fafc',
@@ -348,13 +353,21 @@ export const FolderActions: React.FC<FolderActionsProps> = ({
           <MdCreateNewFolder size={18} />
         </Button>
       </Menu.Target>
-      <Menu.Dropdown>
+      <Menu.Dropdown style={{ direction: 'rtl', textAlign: 'right' }}>
         <Menu.Label>פעולות תיקיות</Menu.Label>
-        <Menu.Item leftSection={<MdAdd size={16} />} onClick={onCreateFolder}>
+        <Menu.Item
+          style={{ direction: 'rtl', textAlign: 'right' }}
+          leftSection={<MdAdd size={16} />}
+          onClick={onCreateFolder}
+        >
           צור תיקייה חדשה
         </Menu.Item>
         {hasSelectedRows && (
-          <Menu.Item leftSection={<MdFolder size={16} />} onClick={onAddToFolder}>
+          <Menu.Item
+            style={{ direction: 'rtl', textAlign: 'right' }}
+            leftSection={<MdFolder size={16} />}
+            onClick={onAddToFolder}
+          >
             הוסף נבחרים לתיקייה
           </Menu.Item>
         )}

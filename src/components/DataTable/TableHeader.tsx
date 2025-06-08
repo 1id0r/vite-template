@@ -161,7 +161,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
             styles={{
               input: {
                 backgroundColor: '#f9fafc',
-                borderColor: '#687aaf',
+                borderColor: '#1f3a8a',
 
                 '&:focus': {
                   borderColor: '#687aaf',
@@ -189,14 +189,13 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
                 variant="outline"
                 size="md"
                 aria-label="Export data"
-                color="#687aaf"
+                color="#1f3a8a"
                 style={{ backgroundColor: '#f9fafc', borderRadius: '8px' }}
               >
                 <MdDownload size={18} />
               </ActionIcon>
             </Menu.Target>
             <Menu.Dropdown style={{ direction: 'rtl', textAlign: 'right' }}>
-              {/* Export Selected - only show if rows are selected */}
               {hasSelectedRows && (
                 <>
                   <Menu.Label>
