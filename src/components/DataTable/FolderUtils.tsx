@@ -78,10 +78,16 @@ export const generateTableRows = (folderState: FolderState, allData: DataItem[])
 
     // If folder is expanded, add its rows
     if (folderState.expandedFolders.has(folder.id)) {
-      folder.rowIds.forEach((rowId) => {
+      folder.rowIds.forEach((rowId, index) => {
         const dataItem = dataMap.get(rowId);
         if (dataItem) {
-          rows.push({ ...dataItem, isInFolder: true });
+          rows.push({
+            ...dataItem,
+            isInFolder: true,
+            folderId: folder.id,
+            isFirstInFolderGroup: index === 0,
+            isLastInFolderGroup: index === folder.rowIds.length - 1,
+          });
         }
       });
     }

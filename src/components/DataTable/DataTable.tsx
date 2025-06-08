@@ -48,6 +48,7 @@ import {
   FolderState,
   getFolderRowStyle,
   getRowStyleBySeverity,
+  isDataItem,
   isFolder,
   TableRow,
 } from './types';
@@ -786,14 +787,22 @@ export function DataTable() {
                     height: `${virtualRow.size}px`,
                     display: 'flex',
                     direction: 'rtl',
-                    paddingBottom: '1px',
-                    paddingRight: '2px',
                     transform: `translateY(${virtualRow.start}px) ${row.getIsSelected() ? 'scale(0.99)' : 'scale(1)'}`,
                     transition: 'opacity 0.1s ease, transform 0.1s ease',
                     cursor: !isRowFolder ? 'pointer' : undefined,
+                    paddingTop: '0px',
+                    paddingRight: '0px',
+                    paddingBottom:
+                      isRowFolder ||
+                      (isDataItem(row.original) &&
+                        row.original.isInFolder &&
+                        row.original.folderId &&
+                        folderState.expandedFolders.has(row.original.folderId))
+                        ? '0px'
+                        : '2px',
                   }}
                   onClick={() => handleRowClick(row.original)}
-                  onContextMenu={(e) => !isRowFolder && handleContextMenu(e, row.original.id)} // Add right-click handler
+                  onContextMenu={(e) => !isRowFolder && handleContextMenu(e, row.original.id)}
                 >
                   <div
                     style={{
@@ -804,6 +813,25 @@ export function DataTable() {
                       ...rowStyle,
                       borderRadius: '8px',
                       opacity: row.getIsSelected() ? 0.8 : 1,
+                      ...(isDataItem(row.original) &&
+                      row.original.isInFolder &&
+                      row.original.folderId &&
+                      folderState.expandedFolders.has(row.original.folderId)
+                        ? {
+                            borderLeft: row.original.isLastInFolderGroup ? '1px solid #1f3a8a' : '',
+                            borderRight: row.original.isLastInFolderGroup
+                              ? '1px solid #1f3a8a'
+                              : '',
+                            borderTop: 'none',
+                            borderBottom: row.original.isLastInFolderGroup
+                              ? '1px solid #1f3a8a'
+                              : 'none',
+                            borderTopRightRadius: row.original.isFirstInFolderGroup ? '8px' : '0',
+                            borderTopLeftRadius: row.original.isFirstInFolderGroup ? '8px' : '0',
+                            borderBottomRightRadius: row.original.isLastInFolderGroup ? '8px' : '0',
+                            borderBottomLeftRadius: row.original.isLastInFolderGroup ? '8px' : '0',
+                          }
+                        : {}),
                     }}
                   >
                     {isRowFolder ? (
@@ -811,12 +839,24 @@ export function DataTable() {
                         style={{
                           width: '100%',
                           padding: '12px 16px',
-                          backgroundColor: 'white',
-                          border: '1px solid #1f3a8a',
-                          borderRadius: '16px',
-                          boxShadow: '0 2px 2px rgba(33, 150, 243, 0.2)',
                           direction: 'rtl',
                           position: 'relative',
+                          ...getFolderRowStyle(),
+                          ...(isFolder(row.original) &&
+                          folderState.expandedFolders.has(row.original.id)
+                            ? {
+                                backgroundColor: 'white',
+                                borderBottom: 'none',
+                                borderBottomLeftRadius: '0',
+                                borderBottomRightRadius: '0',
+                                boxShadow: 'none',
+                                borderTopRightRadius: '8px',
+                                borderTopLeftRadius: '8px',
+                                borderLeft: '1px solid #1f3a8a',
+                                borderRight: '1px solid #1f3a8a',
+                                borderTop: '1px solid #1f3a8a',
+                              }
+                            : {}),
                         }}
                       >
                         <FolderRow

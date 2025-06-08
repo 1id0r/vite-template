@@ -16,6 +16,9 @@ export type DataItem = {
   identities: string[];
   severity: 'warning' | 'major' | 'critical';
   isInFolder?: boolean; // Add this property for items inside folders
+  folderId?: string;
+  isFirstInFolderGroup?: boolean;
+  isLastInFolderGroup?: boolean;
 };
 
 // Folder type
