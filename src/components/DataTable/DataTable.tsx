@@ -82,10 +82,6 @@ export function DataTable() {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
-  const [pagination, setPagination] = useState({
-    pageIndex: 0,
-    pageSize: 1000,
-  });
 
   const [createFolderModalOpen, setCreateFolderModalOpen] = useState(false);
   const [addToFolderModalOpen, setAddToFolderModalOpen] = useState(false);
@@ -305,7 +301,6 @@ export function DataTable() {
     columnResizeMode: 'onChange',
     enableRowSelection: (row) => !isFolder(row.original),
     getRowId: (row) => row.id,
-    autoResetPageIndex: false,
   });
 
   const tableRows = table.getRowModel().rows;
@@ -506,7 +501,7 @@ export function DataTable() {
         columnOrder={columnOrder}
         setColumnOrder={setColumnOrder}
         showAllColumns={showAllColumns}
-        pageSize={pagination.pageSize}
+        pageSize={1000}
         setPageSize={(size) => table.setPageSize(size)}
         table={table}
         data={originalData}
