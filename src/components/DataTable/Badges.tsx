@@ -1,5 +1,5 @@
 import React from 'react';
-import { MdCancel, MdInfo, MdWarning } from 'react-icons/md';
+import { MdBlock, MdCancel, MdInfo, MdWarning } from 'react-icons/md';
 import { Badge } from '@mantine/core';
 import {
   DataItem,
@@ -42,6 +42,8 @@ export const SeverityBadge = ({ severity }: { severity: DataItem['severity'] }) 
         return severityColorMap[severity];
       case 'warning':
         return severityColorMap[severity];
+      case 'disabled':
+        return severityColorMap[severity];
       default:
         return severityColorMap[severity];
     }
@@ -56,6 +58,8 @@ export const SeverityBadge = ({ severity }: { severity: DataItem['severity'] }) 
         return <MdWarning size={12} style={iconStyle} />;
       case 'warning':
         return <MdInfo size={12} style={iconStyle} />;
+      case 'disabled':
+        return <MdBlock size={12} style={iconStyle} />;
       default:
         return null;
     }
@@ -75,6 +79,7 @@ export const SeverityBadge = ({ severity }: { severity: DataItem['severity'] }) 
         gap: '2px',
         padding: '0 8px',
         height: '20px',
+        opacity: severity === 'disabled' ? 0.7 : 1, // Make disabled badges slightly transparent
       }}
     >
       {getIcon(severity)}

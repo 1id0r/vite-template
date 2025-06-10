@@ -17,12 +17,16 @@ import {
   ActionIcon,
   Badge,
   Box,
+  Button,
   Checkbox,
   Group,
   Menu,
   Modal,
+  Select,
   Stack,
   Text,
+  Textarea,
+  TextInput,
   Tooltip,
 } from '@mantine/core';
 import { ActiveFilters } from './ActiveFilters';
@@ -53,6 +57,95 @@ import {
   TableRow,
 } from './types';
 
+// Helper function to detect if text starts with Hebrew
+const startsWithHebrew = (text: string): boolean => {
+  if (!text) return false;
+  const firstChar = text.trim().charAt(0);
+  // Hebrew Unicode range: \u0590-\u05FF
+  return /[\u0590-\u05FF]/.test(firstChar);
+};
+
+// Safe date sorting function with proper type checking
+const createDateSortFn = () => {
+  return (rowA: any, rowB: any, columnId: string) => {
+    const aValue = rowA.getValue(columnId);
+    const bValue = rowB.getValue(columnId);
+
+    // Handle null/undefined/empty values
+    if (!aValue && !bValue) return 0;
+    if (!aValue) return 1;
+    if (!bValue) return -1;
+
+    // Convert to string and validate
+    const aString = String(aValue).trim();
+    const bString = String(bValue).trim();
+
+    // Check if strings are empty
+    if (!aString && !bString) return 0;
+    if (!aString) return 1;
+    if (!bString) return -1;
+
+    // Try to parse as dates
+    const aDate = new Date(aString);
+    const bDate = new Date(bString);
+
+    // Check if dates are valid
+    const aIsValidDate = !isNaN(aDate.getTime());
+    const bIsValidDate = !isNaN(bDate.getTime());
+
+    // If both are invalid dates, fall back to string comparison
+    if (!aIsValidDate && !bIsValidDate) {
+      return aString.localeCompare(bString);
+    }
+
+    // If only one is invalid, put invalid dates last
+    if (!aIsValidDate) return 1;
+    if (!bIsValidDate) return -1;
+
+    // Both are valid dates, compare chronologically
+    return aDate.getTime() - bDate.getTime();
+  };
+};
+
+// Custom sort function for Hebrew-first, then English
+const createHebrewFirstSortFn = () => {
+  return (rowA: any, rowB: any, columnId: string) => {
+    const aValue = rowA.getValue(columnId);
+    const bValue = rowB.getValue(columnId);
+
+    // Handle null/undefined values
+    if (!aValue && !bValue) return 0;
+    if (!aValue) return 1;
+    if (!bValue) return -1;
+
+    const aString = String(aValue).trim();
+    const bString = String(bValue).trim();
+
+    const aIsHebrew = startsWithHebrew(aString);
+    const bIsHebrew = startsWithHebrew(bString);
+
+    // If both are Hebrew or both are not Hebrew, sort normally with locale
+    if (aIsHebrew === bIsHebrew) {
+      if (aIsHebrew) {
+        // Both Hebrew - use Hebrew locale sorting
+        return aString.localeCompare(bString, 'he-IL', {
+          sensitivity: 'base',
+          ignorePunctuation: true,
+        });
+      } else {
+        // Both English/Latin - use English locale sorting
+        return aString.localeCompare(bString, 'en-US', {
+          sensitivity: 'base',
+          ignorePunctuation: true,
+        });
+      }
+    }
+
+    // Hebrew comes first, English comes second
+    return aIsHebrew ? -1 : 1;
+  };
+};
+
 // Format date as d/m and hour:minute
 function formatDateDMHour(dateString: string) {
   const date = new Date(dateString);
@@ -64,8 +157,235 @@ function formatDateDMHour(dateString: string) {
   return `${day}/${month} ${hour}:${minute}`;
 }
 
+// Manual Alert Modal Component
+interface ManualAlertModalProps {
+  opened: boolean;
+  onClose: () => void;
+  onSave: (alertData: Partial<DataItem>) => void;
+}
+
+const ManualAlertModal: React.FC<ManualAlertModalProps> = ({ opened, onClose, onSave }) => {
+  const [formData, setFormData] = useState({
+    severity: '',
+    entityName: '',
+    startDate: '',
+    description: '',
+  });
+
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
+
+  const handleSubmit = () => {
+    const newErrors: Record<string, boolean> = {};
+
+    if (!formData.severity) newErrors.severity = true;
+    if (!formData.entityName) newErrors.entityName = true;
+    if (!formData.startDate) newErrors.startDate = true;
+    if (!formData.description) newErrors.description = true;
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length === 0) {
+      // Create new alert data
+      const newAlert: Partial<DataItem> = {
+        id: `manual-${Date.now()}`,
+        objectId: formData.entityName,
+        description: formData.description,
+        startTime: formData.startDate || new Date().toISOString().split('T')[0],
+        lastUpdated: new Date().toISOString().split('T')[0],
+        severity: formData.severity as DataItem['severity'],
+        status: 'active',
+        impact: 'medium',
+        environment: 'production',
+        origin: 'Manual',
+        snId: `MAN-${Math.floor(100000 + Math.random() * 900000)}`,
+        identities: ['Manual Alert'],
+        hierarchy: 'Manual / User Generated / Alert',
+      };
+
+      onSave(newAlert);
+
+      // Reset form
+      setFormData({
+        severity: '',
+        entityName: '',
+        startDate: '',
+        description: '',
+      });
+      setErrors({});
+      onClose();
+    }
+  };
+
+  const handleClose = () => {
+    setFormData({
+      severity: '',
+      entityName: '',
+      startDate: '',
+      description: '',
+    });
+    setErrors({});
+    onClose();
+  };
+
+  return (
+    <Modal
+      opened={opened}
+      onClose={handleClose}
+      title="הוספת התראה ידנית"
+      size="md"
+      centered
+      style={{ direction: 'rtl' }}
+      styles={{
+        title: {
+          fontWeight: 600,
+          fontSize: '18px',
+          textAlign: 'center',
+          width: '100%',
+        },
+        header: {
+          paddingBottom: '20px',
+          borderBottom: '1px solid #e9ecef',
+        },
+        close: {
+          position: 'absolute',
+          top: '15px',
+          left: '15px',
+        },
+      }}
+    >
+      <Stack gap="md" p="md">
+        <Group grow>
+          <div>
+            <Text size="sm" fw={500} mb={5}>
+              חומרה{' '}
+              <Text component="span" c="red">
+                *
+              </Text>
+            </Text>
+            <Select
+              placeholder="בחר חומרה"
+              value={formData.severity}
+              onChange={(value) => {
+                setFormData((prev) => ({ ...prev, severity: value || '' }));
+                if (errors.severity) setErrors((prev) => ({ ...prev, severity: false }));
+              }}
+              data={[
+                { value: 'critical', label: 'Critical' },
+                { value: 'major', label: 'Major' },
+                { value: 'warning', label: 'Warning' },
+                { value: 'disabled', label: 'Disabled' },
+              ]}
+              error={errors.severity}
+              styles={{
+                input: {
+                  borderColor: errors.severity ? '#fa5252' : undefined,
+                  textAlign: 'right',
+                  direction: 'rtl',
+                },
+              }}
+            />
+            {errors.severity && (
+              <Text size="xs" c="red" mt={2}>
+                ⚠ Error
+              </Text>
+            )}
+          </div>
+
+          <div>
+            <Text size="sm" fw={500} mb={5}>
+              שם היישות התקולה{' '}
+              <Text component="span" c="red">
+                *
+              </Text>
+            </Text>
+            <TextInput
+              placeholder="שם יישות"
+              value={formData.entityName}
+              onChange={(e) => {
+                setFormData((prev) => ({ ...prev, entityName: e.target.value }));
+                if (errors.entityName) setErrors((prev) => ({ ...prev, entityName: false }));
+              }}
+              error={errors.entityName}
+              styles={{
+                input: {
+                  textAlign: 'right',
+                  direction: 'rtl',
+                },
+              }}
+            />
+          </div>
+        </Group>
+
+        <div>
+          <Text size="sm" fw={500} mb={5}>
+            זמן התחלה{' '}
+            <Text component="span" c="red">
+              *
+            </Text>
+          </Text>
+          <TextInput
+            placeholder="DD/MM/YY או DD/MM/YYYY"
+            value={formData.startDate}
+            onChange={(e) => {
+              setFormData((prev) => ({ ...prev, startDate: e.target.value }));
+              if (errors.startDate) setErrors((prev) => ({ ...prev, startDate: false }));
+            }}
+            error={errors.startDate}
+            styles={{
+              input: {
+                textAlign: 'right',
+                direction: 'rtl',
+              },
+            }}
+          />
+        </div>
+
+        <div>
+          <Text size="sm" fw={500} mb={5}>
+            תיאור{' '}
+            <Text component="span" c="red">
+              *
+            </Text>
+          </Text>
+          <Textarea
+            placeholder="תיאור אודות הבעיה והשפתעה"
+            value={formData.description}
+            onChange={(e) => {
+              setFormData((prev) => ({ ...prev, description: e.target.value }));
+              if (errors.description) setErrors((prev) => ({ ...prev, description: false }));
+            }}
+            rows={4}
+            error={errors.description}
+            styles={{
+              input: {
+                textAlign: 'right',
+                direction: 'rtl',
+                resize: 'vertical',
+              },
+            }}
+          />
+        </div>
+
+        <Group justify="center" mt="xl">
+          <Button
+            onClick={handleSubmit}
+            style={{
+              backgroundColor: '#1f3a8a',
+              width: '200px',
+              height: '40px',
+              borderRadius: '8px',
+            }}
+          >
+            הוספת התראה ידנית
+          </Button>
+        </Group>
+      </Stack>
+    </Modal>
+  );
+};
+
 export function DataTable() {
-  const [originalData] = useState<DataItem[]>(() => generateMockData());
+  const [originalData, setOriginalData] = useState<DataItem[]>(() => generateMockData());
 
   const [folderState, setFolderState] = useState<FolderState>(() => {
     const saved = loadFolderState();
@@ -85,6 +405,7 @@ export function DataTable() {
 
   const [createFolderModalOpen, setCreateFolderModalOpen] = useState(false);
   const [addToFolderModalOpen, setAddToFolderModalOpen] = useState(false);
+  const [manualAlertModalOpen, setManualAlertModalOpen] = useState(false);
 
   const [selectedRow, setSelectedRow] = useState<DataItem | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -135,6 +456,7 @@ export function DataTable() {
         },
         enableSorting: false,
         enableColumnFilter: false,
+        enableHiding: false,
         size: 50,
       },
       columnHelper.accessor((row) => (isFolder(row) ? '' : row.objectId), {
@@ -148,8 +470,10 @@ export function DataTable() {
             </Text>
           );
         },
-        enableColumnFilter: true,
+        enableColumnFilter: false,
         enableHiding: false,
+        enableSorting: true,
+        sortingFn: createHebrewFirstSortFn(),
         size: 150,
       }),
       columnHelper.accessor((row) => (isFolder(row) ? '' : row.description), {
@@ -172,9 +496,24 @@ export function DataTable() {
             </Tooltip>
           );
         },
-        enableColumnFilter: true,
+        enableColumnFilter: false,
         enableHiding: false,
+        enableSorting: true,
+        sortingFn: createHebrewFirstSortFn(),
         size: 300,
+      }),
+      columnHelper.accessor((row) => (isFolder(row) ? '' : row.startTime), {
+        id: 'startTime',
+        header: 'זמן התחלה',
+        cell: (info) => {
+          if (isFolder(info.row.original)) return null;
+          return <Text color="black">{formatDateDMHour(info.getValue())}</Text>;
+        },
+        enableColumnFilter: false,
+        enableHiding: false,
+        enableSorting: true,
+        sortingFn: createDateSortFn(),
+        size: 150,
       }),
       columnHelper.accessor((row) => (isFolder(row) ? '' : row.hierarchy), {
         id: 'hierarchy',
@@ -184,6 +523,9 @@ export function DataTable() {
           return <Text color="black">{info.getValue()}</Text>;
         },
         enableColumnFilter: false,
+        enableHiding: true,
+        enableSorting: true,
+        sortingFn: createHebrewFirstSortFn(),
         size: 250,
       }),
       columnHelper.accessor((row) => (isFolder(row) ? '' : row.lastUpdated), {
@@ -191,19 +533,12 @@ export function DataTable() {
         header: 'עודכן לאחרונה',
         cell: (info) => {
           if (isFolder(info.row.original)) return null;
-          return <Text color="black">{formatDateDMHour(info.getValue())}</Text>;
+          return <Text c="black">{formatDateDMHour(info.getValue())}</Text>;
         },
-        enableColumnFilter: true,
-        size: 150,
-      }),
-      columnHelper.accessor((row) => (isFolder(row) ? '' : row.startTime), {
-        id: 'startTime',
-        header: 'זמן התחלה',
-        cell: (info) => {
-          if (isFolder(info.row.original)) return null;
-          return <Text color="black">{formatDateDMHour(info.getValue())}</Text>;
-        },
-        enableColumnFilter: true,
+        enableColumnFilter: false,
+        enableHiding: true,
+        enableSorting: true,
+        sortingFn: createDateSortFn(),
         size: 150,
       }),
       columnHelper.accessor((row) => (isFolder(row) ? '' : row.impact), {
@@ -213,11 +548,18 @@ export function DataTable() {
           if (isFolder(info.row.original)) return null;
           return <ImpactBadge impact={info.getValue() as DataItem['impact']} />;
         },
-        enableColumnFilter: true,
-        filterFn: (row, columnId, filterValue) => {
-          if (!filterValue || isFolder(row.original)) return true;
-          const impact = (row.original as DataItem).impact;
-          return impact === filterValue;
+        enableColumnFilter: false,
+        enableHiding: true,
+        enableSorting: true,
+        sortingFn: (rowA, rowB, columnId) => {
+          const aValue = rowA.getValue(columnId);
+          const bValue = rowB.getValue(columnId);
+
+          const impactOrder = { high: 3, medium: 2, low: 1 };
+          const aRank = impactOrder[aValue as keyof typeof impactOrder] || 0;
+          const bRank = impactOrder[bValue as keyof typeof impactOrder] || 0;
+
+          return bRank - aRank;
         },
         size: 120,
       }),
@@ -229,6 +571,9 @@ export function DataTable() {
           return <EnvironmentBadge environment={info.getValue() as DataItem['environment']} />;
         },
         enableColumnFilter: true,
+        enableHiding: true,
+        enableSorting: true,
+        sortingFn: createHebrewFirstSortFn(),
         filterFn: (row, columnId, filterValue) => {
           if (!filterValue || isFolder(row.original)) return true;
           const environment = (row.original as DataItem).environment;
@@ -244,6 +589,9 @@ export function DataTable() {
           return <Text c="black">{info.getValue()}</Text>;
         },
         enableColumnFilter: true,
+        enableHiding: true,
+        enableSorting: true,
+        sortingFn: createHebrewFirstSortFn(),
         size: 120,
       }),
       columnHelper.accessor((row) => (isFolder(row) ? '' : row.snId), {
@@ -253,7 +601,10 @@ export function DataTable() {
           if (isFolder(info.row.original)) return null;
           return <Text c="black">{info.getValue()}</Text>;
         },
-        enableColumnFilter: true,
+        enableColumnFilter: false,
+        enableHiding: true,
+        enableSorting: true,
+        sortingFn: createHebrewFirstSortFn(),
         size: 150,
       }),
       columnHelper.accessor((row) => (isFolder(row) ? '' : row.severity), {
@@ -264,6 +615,18 @@ export function DataTable() {
           return <SeverityBadge severity={info.getValue() as DataItem['severity']} />;
         },
         enableColumnFilter: true,
+        enableHiding: true,
+        enableSorting: true,
+        sortingFn: (rowA, rowB, columnId) => {
+          const aValue = rowA.getValue(columnId);
+          const bValue = rowB.getValue(columnId);
+
+          const severityOrder = { critical: 4, major: 3, warning: 2, disabled: 1 };
+          const aRank = severityOrder[aValue as keyof typeof severityOrder] || 0;
+          const bRank = severityOrder[bValue as keyof typeof severityOrder] || 0;
+
+          return bRank - aRank;
+        },
         filterFn: (row, columnId, filterValue) => {
           if (!filterValue || isFolder(row.original)) return true;
           const severity = (row.original as DataItem).severity;
@@ -332,7 +695,6 @@ export function DataTable() {
     [table]
   );
 
-  // Calculate if we need to stretch columns to fill container
   const shouldStretchColumns = containerWidth > totalWidth;
   const stretchRatio = shouldStretchColumns ? containerWidth / totalWidth : 1;
 
@@ -342,8 +704,10 @@ export function DataTable() {
         return (
           typeof column.accessorFn !== 'undefined' &&
           column.getCanHide() &&
+          column.id !== 'select' &&
           column.id !== 'objectId' &&
-          column.id !== 'description'
+          column.id !== 'description' &&
+          column.id !== 'startTime'
         );
       }),
     [table]
@@ -400,6 +764,20 @@ export function DataTable() {
     [originalData]
   );
 
+  const handleAddManualAlert = useCallback(() => {
+    setManualAlertModalOpen(true);
+  }, []);
+
+  const handleSaveManualAlert = useCallback((alertData: Partial<DataItem>) => {
+    const newAlert = alertData as DataItem;
+    setOriginalData((prev) => [newAlert, ...prev]);
+
+    setFolderState((prev) => ({
+      ...prev,
+      unassignedRows: [newAlert, ...prev.unassignedRows],
+    }));
+  }, []);
+
   const handleRowClick = (row: TableRow) => {
     if (!isFolder(row)) {
       setSelectedRow(row as DataItem);
@@ -408,14 +786,14 @@ export function DataTable() {
   };
 
   const handleContextMenu = (event: React.MouseEvent, rowId: string) => {
-    event.preventDefault(); // Prevent default browser context menu
+    event.preventDefault();
     setContextMenuPosition({ x: event.clientX, y: event.clientY });
     setContextMenuRowId(rowId);
   };
 
   const handleAddToFolderFromContextMenu = () => {
     if (contextMenuRowId) {
-      const currentSelectionIds = Object.keys(rowSelection); // Get IDs from rowSelection state
+      const currentSelectionIds = Object.keys(rowSelection);
       const idsToMove = new Set([...currentSelectionIds, contextMenuRowId]);
       setRowIdsToMove(Array.from(idsToMove));
       setAddToFolderModalOpen(true);
@@ -447,6 +825,8 @@ export function DataTable() {
                 majorCount: folder.majorCount - (originalDataItem?.severity === 'major' ? 1 : 0),
                 warningCount:
                   folder.warningCount - (originalDataItem?.severity === 'warning' ? 1 : 0),
+                disabledCount:
+                  folder.disabledCount - (originalDataItem?.severity === 'disabled' ? 1 : 0),
               };
             }
             return folder;
@@ -488,8 +868,6 @@ export function DataTable() {
     return () => resizeObserver.disconnect();
   }, []);
 
-  const tableWidth = Math.max(totalWidth, containerWidth);
-
   return (
     <div style={{ width: '100%', direction: 'rtl' }}>
       <TableHeader
@@ -509,6 +887,7 @@ export function DataTable() {
         hasSelectedRows={selectionInfo.selectedRowsCount > 0}
         onCreateFolder={() => setCreateFolderModalOpen(true)}
         onAddToFolder={() => setAddToFolderModalOpen(true)}
+        onAddManualAlert={handleAddManualAlert}
       />
 
       <ActiveFilters table={table} setColumnFilters={setColumnFilters} />
@@ -554,7 +933,6 @@ export function DataTable() {
         </Box>
       )}
 
-      {/* Context Menu */}
       {contextMenuPosition && (
         <Menu
           opened={!!contextMenuPosition}
@@ -572,7 +950,6 @@ export function DataTable() {
           withArrow
         >
           <Menu.Target>
-            {/* This target is just to anchor the menu, not visible */}
             <div
               style={{
                 position: 'fixed',
@@ -660,7 +1037,7 @@ export function DataTable() {
                         width: `${headerWidth}px`,
                         minWidth: `${headerWidth}px`,
                         maxWidth: `${headerWidth}px`,
-                        padding: '2px 6px ',
+                        padding: '2px 6px',
                         fontWeight: 500,
                         backgroundColor: 'white',
                         borderLeft: 'none',
@@ -880,7 +1257,6 @@ export function DataTable() {
                               padding: '12px',
                               paddingRight:
                                 (row.original as any).isInFolder && isFirstCell ? '30px' : '16px',
-
                               backgroundColor: 'inherit',
                               borderTopRightRadius: isFirstCell ? '8px' : 0,
                               borderBottomRightRadius: isFirstCell ? '8px' : 0,
@@ -921,6 +1297,12 @@ export function DataTable() {
           </Text>
         )}
       </Group>
+
+      <ManualAlertModal
+        opened={manualAlertModalOpen}
+        onClose={() => setManualAlertModalOpen(false)}
+        onSave={handleSaveManualAlert}
+      />
 
       <CreateFolderModal
         opened={createFolderModalOpen}

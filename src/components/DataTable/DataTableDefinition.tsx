@@ -58,7 +58,7 @@ export const createColumns = () => [
         </Text>
       </Tooltip>
     ),
-    enableColumnFilter: true,
+    enableColumnFilter: false,
     size: 300,
   }),
   columnHelper.accessor('severity', {

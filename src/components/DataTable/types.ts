@@ -14,7 +14,7 @@ export type DataItem = {
   origin: string;
   snId: string;
   identities: string[];
-  severity: 'warning' | 'major' | 'critical';
+  severity: 'warning' | 'major' | 'critical' | 'disabled'; // Added 'disabled' severity
   isInFolder?: boolean; // Add this property for items inside folders
   folderId?: string;
   isFirstInFolderGroup?: boolean;
@@ -31,6 +31,7 @@ export type FolderItem = {
   criticalCount: number;
   majorCount: number;
   warningCount: number;
+  disabledCount: number; // Added disabled count
 };
 
 // Combined type for table display
@@ -77,6 +78,7 @@ export const severityColorMap = {
   warning: 'blue',
   major: 'yellow',
   critical: 'red',
+  disabled: 'gray', // Added disabled color
 };
 
 // Row style based on severity
@@ -95,6 +97,12 @@ export const getRowStyleBySeverity = (severity: DataItem['severity']) => {
     return {
       backgroundColor: '#f0f9ff', // Light blue for warning severity
       border: '1px solid #a0c3e0', // Darker blue border
+    };
+  } else if (severity === 'disabled') {
+    return {
+      backgroundColor: '#f5f5f5', // Light gray for disabled severity
+      border: '1px solid #d0d0d0', // Darker gray border
+      opacity: 0.7, // Make disabled items slightly transparent
     };
   } else {
     return {

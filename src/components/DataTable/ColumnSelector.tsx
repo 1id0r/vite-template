@@ -12,7 +12,8 @@ interface ColumnSelectorProps {
   showAllColumns: () => void;
 }
 
-const pinnedColumnIds = ['select', 'newBadge', 'objectId', 'description'];
+// Updated to include startTime, description, and objectId as pinned
+const pinnedColumnIds = ['select', 'newBadge', 'objectId', 'description', 'startTime'];
 
 export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   allColumns,

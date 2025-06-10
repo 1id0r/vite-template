@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   MdAdd,
+  MdBlock,
   MdCancel,
   MdCreateNewFolder,
   MdDelete,
@@ -187,7 +188,7 @@ export const FolderRow: React.FC<FolderRowProps> = ({
     }
   };
 
-  const getSeverityIcon = (severity: 'critical' | 'major' | 'warning') => {
+  const getSeverityIcon = (severity: 'critical' | 'major' | 'warning' | 'disabled') => {
     // Adjust icon position slightly for better vertical alignment with text
     // Add a small bottom margin to push the icon down.
     // Based on user's previous manual edit, let's try marginBottom: -2
@@ -199,12 +200,14 @@ export const FolderRow: React.FC<FolderRowProps> = ({
         return <MdWarning size={12} style={iconStyle} />;
       case 'warning':
         return <MdInfo size={12} style={iconStyle} />;
+      case 'disabled':
+        return <MdBlock size={12} style={iconStyle} />;
       default:
         return null;
     }
   };
 
-  const getSeverityColor = (severity: 'critical' | 'major' | 'warning') => {
+  const getSeverityColor = (severity: 'critical' | 'major' | 'warning' | 'disabled') => {
     switch (severity) {
       case 'critical':
         return '#fff3f3'; // Light red color for critical severity border, matching row background
@@ -212,6 +215,8 @@ export const FolderRow: React.FC<FolderRowProps> = ({
         return '#fff8b7'; // Light yellow color for major severity border, matching row background
       case 'warning':
         return '#b5e1ff'; // Light blue color for warning severity border, matching row background
+      case 'disabled':
+        return '#f0f0f0'; // Light gray color for disabled severity border
       default:
         return severityColorMap[severity];
     }
@@ -312,6 +317,27 @@ export const FolderRow: React.FC<FolderRowProps> = ({
             {folder.warningCount}
           </Badge>
         )}
+        {folder.disabledCount > 0 && (
+          <Badge
+            color={severityColorMap.disabled}
+            variant="light"
+            radius="xl"
+            size="sm"
+            style={{
+              border: `2px solid ${getSeverityColor('disabled')}`,
+              backgroundColor: 'transparent',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '2px',
+              padding: '0 8px',
+              height: '20px',
+              opacity: 0.7, // Make disabled badges slightly transparent
+            }}
+          >
+            {getSeverityIcon('disabled')}
+            {folder.disabledCount}
+          </Badge>
+        )}
       </Group>
 
       <ActionIcon variant="subtle" size="md" onClick={() => setIsEditing(true)} color="blue">
@@ -343,7 +369,7 @@ export const FolderActions: React.FC<FolderActionsProps> = ({
         <Button
           variant="outline"
           size="xs"
-          color="#687aaf"
+          color="#1f3a8a"
           style={{
             borderRadius: '8px',
             backgroundColor: '#f9fafc',

@@ -58,6 +58,7 @@ export const generateTableRows = (folderState: FolderState, allData: DataItem[])
     let criticalCount = 0;
     let majorCount = 0;
     let warningCount = 0;
+    let disabledCount = 0; // Added disabled count
 
     folder.rowIds.forEach((rowId) => {
       const dataItem = dataMap.get(rowId);
@@ -65,6 +66,7 @@ export const generateTableRows = (folderState: FolderState, allData: DataItem[])
         if (dataItem.severity === 'critical') criticalCount++;
         else if (dataItem.severity === 'major') majorCount++;
         else if (dataItem.severity === 'warning') warningCount++;
+        else if (dataItem.severity === 'disabled') disabledCount++; // Count disabled items
       }
     });
 
@@ -74,6 +76,7 @@ export const generateTableRows = (folderState: FolderState, allData: DataItem[])
       criticalCount,
       majorCount,
       warningCount,
+      disabledCount, // Include disabled count
     } as FolderItem);
 
     // If folder is expanded, add its rows
@@ -113,6 +116,7 @@ export const createFolder = (folderState: FolderState, folderName: string): Fold
     criticalCount: 0,
     majorCount: 0,
     warningCount: 0,
+    disabledCount: 0, // Added disabled count
   };
 
   const newState = {

@@ -1,6 +1,6 @@
 import React from 'react';
-import { MdDownload, MdFileUpload, MdSearch } from 'react-icons/md';
-import { ActionIcon, Group, Menu, Select, Text, TextInput } from '@mantine/core';
+import { MdAdd, MdDownload, MdFileUpload, MdSearch } from 'react-icons/md';
+import { ActionIcon, Button, Group, Menu, Select, Text, TextInput } from '@mantine/core';
 import { ColumnSelector } from './ColumnSelector';
 import { FolderActions } from './FolderComponents';
 import { DataItem, FolderItem } from './types';
@@ -24,6 +24,8 @@ interface TableHeaderProps {
   hasSelectedRows: boolean;
   onCreateFolder: () => void;
   onAddToFolder: () => void;
+  // New prop for manual alert
+  onAddManualAlert?: () => void;
 }
 
 export const TableHeader: React.FC<TableHeaderProps> = ({
@@ -41,9 +43,10 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
   data,
   // Folder props
   folders,
-
   onCreateFolder,
   onAddToFolder,
+  // Manual alert prop
+  onAddManualAlert,
 }) => {
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const hasSelectedRows = selectedRows.length > 0;
@@ -150,6 +153,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
       <Group mb="md" justify="space-between">
         <Group>
           <TextInput
+            size="xs"
             placeholder="חיפוש בכל העמודות..."
             value={globalFilter ?? ''}
             onChange={(event) => setGlobalFilter(event.currentTarget.value)}
@@ -243,19 +247,26 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>
-        </Group>
-
-        {/* <Group>
-          {/* <Text size="sm">פריטים בעמוד:</Text>
-          <Select
-            value={String(pageSize)}
-            onChange={(value) => {
-              setPageSize(Number(value));
+          {/* Manual Alert Button - NEW */}
+          <Button
+            onClick={onAddManualAlert}
+            variant="filled"
+            color="#1f3a8a"
+            size="xs"
+            leftSection={<MdAdd size={16} />}
+            style={{
+              backgroundColor: '#1f3a8a',
+              borderRadius: '8px',
+              fontWeight: 600,
+              padding: '6px 10px',
+              '&:hover': {
+                backgroundColor: '#1e40af',
+              },
             }}
-            data={['5', '10', '20', '50', '500']}
-            style={{ width: '80px' }}
-          /> */}
-        {/* </Group> */}
+          >
+            הוספת התראה ידנית
+          </Button>
+        </Group>
       </Group>
     </div>
   );
