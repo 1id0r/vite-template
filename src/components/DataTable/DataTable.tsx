@@ -813,18 +813,16 @@ export function DataTable() {
                       row.original.folderId &&
                       folderState.expandedFolders.has(row.original.folderId)
                         ? {
-                            borderLeft: row.original.isLastInFolderGroup ? '1px solid #1f3a8a' : '',
-                            borderRight: row.original.isLastInFolderGroup
-                              ? '1px solid #1f3a8a'
-                              : '',
+                            borderLeft: '1px solid #1f3a8a',
+                            borderRight: '1px solid #1f3a8a',
                             borderTop: 'none',
                             borderBottom: row.original.isLastInFolderGroup
                               ? '1px solid #1f3a8a'
                               : 'none',
-                            borderTopRightRadius: row.original.isFirstInFolderGroup ? '8px' : '0',
-                            borderTopLeftRadius: row.original.isFirstInFolderGroup ? '8px' : '0',
-                            borderBottomRightRadius: row.original.isLastInFolderGroup ? '8px' : '0',
-                            borderBottomLeftRadius: row.original.isLastInFolderGroup ? '8px' : '0',
+                            borderTopRightRadius: '8px',
+                            borderTopLeftRadius: '8px',
+                            borderBottomRightRadius: '8px',
+                            borderBottomLeftRadius: '8px',
                           }
                         : {}),
                     }}
