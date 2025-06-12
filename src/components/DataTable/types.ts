@@ -27,11 +27,11 @@ export type FolderItem = {
   name: string;
   type: 'folder';
   isExpanded: boolean;
-  rowIds: string[]; // IDs of rows in this folder
+  rowIds: string[]; 
   criticalCount: number;
   majorCount: number;
   warningCount: number;
-  disabledCount: number; // Added disabled count
+  disabledCount: number; 
 };
 
 // Combined type for table display
@@ -81,33 +81,33 @@ export const severityColorMap = {
   disabled: 'gray', // Added disabled color
 };
 
-// Row style based on severity
+// Row style based on severity - FIXED: Removed redundant borders
 export const getRowStyleBySeverity = (severity: DataItem['severity']) => {
   if (severity === 'critical') {
     return {
-      backgroundColor: '#fcd4d4', // Set background color to #fcd4d4 for critical severity
-      border: '1px solid #f0b0b0', // Darker red border
+      backgroundColor: '#FFF3F3',   
+      border: '1px solid #FDD4D4',
     };
   } else if (severity === 'major') {
     return {
-      backgroundColor: '#fffac8', // Light yellow for major severity
-      border: '1px solid #e0d5a1', // Darker yellow border
+      backgroundColor: '#FEFCE8', 
+      border: '1px solid #FFE2CC', 
     };
   } else if (severity === 'warning') {
     return {
-      backgroundColor: '#f0f9ff', // Light blue for warning severity
-      border: '1px solid #a0c3e0', // Darker blue border
+      backgroundColor: '#F0F9FF', // Light blue for warning severity
+      border: '1px solid #CDD9FF', // Dark blue border for warning severity
     };
   } else if (severity === 'disabled') {
     return {
-      backgroundColor: '#f5f5f5', // Light gray for disabled severity
-      border: '1px solid #d0d0d0', // Darker gray border
-      opacity: 0.7, // Make disabled items slightly transparent
+      backgroundColor: '#fafaff', // Light gray for disabled severity
+      border: '0.5px solid #495057', // Black border for disabled severity
+      opacity: 0.5, // Make disabled items slightly transparent
     };
   } else {
     return {
       backgroundColor: 'white',
-      border: '1px solid #e0e0e0', // Grey border for default
+      border: '1px solid #e0e0e0', // Light gray border for default
     };
   }
 };
@@ -117,6 +117,6 @@ export const getFolderRowStyle = () => {
   return {
     backgroundColor: '#f8f9fa',
     fontWeight: 'bold',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+    // boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
   };
 };
