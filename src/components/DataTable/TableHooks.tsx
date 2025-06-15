@@ -21,11 +21,12 @@ import {
   toggleFolderExpansion,
 } from './FolderUtils';
 import { generateMockData } from './mockData';
-import { DataItem, FolderState, isFolder, TableRow } from './types';
+import { DataItem, FolderItem, FolderState, isFolder, TableRow } from './types';
 
 // Hook for managing table data and folder state
 export const useTableData = () => {
   const [originalData, setOriginalData] = useState<DataItem[]>(() => generateMockData());
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
 
   const [folderState, setFolderState] = useState<FolderState>(() => {
     const saved = loadFolderState();
@@ -140,21 +141,92 @@ export const useContextMenu = () => {
 };
 
 // Hook for folder operations
+// Update TableHooks.tsx - useFolderOperations hook
 export const useFolderOperations = (
   folderState: FolderState,
   setFolderState: React.Dispatch<React.SetStateAction<FolderState>>,
   originalData: DataItem[],
   setTableVersion: React.Dispatch<React.SetStateAction<number>>
 ) => {
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
+
   const handleCreateFolder = useCallback(
-    (folderName: string) => {
-      setFolderState((prev) => {
-        const newState = createFolder(prev, folderName);
-        setTableVersion((v) => v + 1);
-        return newState;
-      });
+    (folderName?: string) => {
+      const tempFolderId = `folder-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      const newFolder: FolderItem = {
+        id: tempFolderId,
+        name: folderName || '', // Allow empty name
+        type: 'folder',
+        isExpanded: false,
+        rowIds: [],
+        criticalCount: 0,
+        majorCount: 0,
+        warningCount: 0,
+        disabledCount: 0,
+      };
+
+      setFolderState((prev) => ({
+        ...prev,
+        folders: [...prev.folders, newFolder],
+      }));
+
+      // Start editing immediately if no name provided
+      if (!folderName) {
+        setEditingFolderId(tempFolderId);
+      }
+
+      setTableVersion((v) => v + 1);
     },
     [setFolderState, setTableVersion]
+  );
+
+  const handleSaveFolderName = useCallback(
+    (folderId: string, newName: string) => {
+      if (!newName.trim()) {
+        // Delete folder if no name provided
+        setFolderState((prev) => ({
+          ...prev,
+          folders: prev.folders.filter((f) => f.id !== folderId),
+        }));
+
+        alert('שם התיקייה נדרש. התיקייה נמחקה.');
+
+        setEditingFolderId(null);
+        setTableVersion((v) => v + 1);
+        return;
+      }
+
+      // Save the folder name
+      setFolderState((prev) => ({
+        ...prev,
+        folders: prev.folders.map((folder) =>
+          folder.id === folderId ? { ...folder, name: newName.trim() } : folder
+        ),
+      }));
+
+      setEditingFolderId(null);
+      setTableVersion((v) => v + 1);
+    },
+    [setFolderState, setTableVersion]
+  );
+
+  const handleCancelFolderEdit = useCallback(
+    (folderId: string) => {
+      const folder = folderState.folders.find((f) => f.id === folderId);
+
+      if (folder && !folder.name.trim()) {
+        // Delete folder if it has no name
+        setFolderState((prev) => ({
+          ...prev,
+          folders: prev.folders.filter((f) => f.id !== folderId),
+        }));
+        setTableVersion((v) => v + 1);
+      }
+
+      setEditingFolderId(null);
+    },
+    [folderState.folders, setFolderState, setTableVersion]
   );
 
   const handleToggleFolderExpansion = useCallback(
@@ -170,6 +242,10 @@ export const useFolderOperations = (
     },
     [setFolderState]
   );
+
+  const handleStartEdit = useCallback((folderId: string) => {
+    setEditingFolderId(folderId);
+  }, []);
 
   const handleDeleteFolder = useCallback(
     (folderId: string) => {
@@ -236,7 +312,11 @@ export const useFolderOperations = (
   );
 
   return {
+    editingFolderId,
     handleCreateFolder,
+    handleSaveFolderName,
+    handleCancelFolderEdit,
+    handleStartEdit,
     handleToggleFolderExpansion,
     handleRenameFolder,
     handleDeleteFolder,
@@ -245,7 +325,6 @@ export const useFolderOperations = (
     handleMoveRowToUnassigned,
   };
 };
-
 // Hook for table instance and related computations
 export const useTable = (
   displayData: TableRow[],

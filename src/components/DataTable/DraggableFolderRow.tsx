@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   MdAdd,
   MdBlock,
@@ -12,7 +12,7 @@ import {
   MdKeyboardArrowRight,
   MdWarning,
 } from 'react-icons/md';
-import { ActionIcon, Badge, Group, Text, TextInput } from '@mantine/core';
+import { ActionIcon, Badge, Group, Stack, Text, TextInput } from '@mantine/core';
 import { useDropTarget } from './DragDropHooks';
 import { FolderItem, FolderState, severityColorMap } from './types';
 
@@ -24,6 +24,11 @@ interface DraggableFolderRowProps {
   onRename: (folderId: string, newName: string) => void;
   onDelete: (folderId: string) => void;
   onDropRow: (rowId: string, targetFolderId: string) => void;
+  // New props for inline editing
+  isEditing?: boolean;
+  onStartEdit?: (folderId: string) => void;
+  onSaveName?: (folderId: string, newName: string) => void;
+  onCancelEdit?: (folderId: string) => void;
 }
 
 export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
@@ -34,23 +39,46 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
   onRename,
   onDelete,
   onDropRow,
+  isEditing = false,
+  onStartEdit,
+  onSaveName,
+  onCancelEdit,
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(folder.name);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Drop target functionality
   const { dropRef, isOver, canDrop, dropProps } = useDropTarget(folder.id, folderState, onDropRow);
 
-  const handleSaveEdit = () => {
-    if (editName.trim() && editName.trim() !== folder.name) {
-      onRename(folder.id, editName.trim());
+  // Auto-focus when editing starts
+  useEffect(() => {
+    if ((isEditing || !folder.name) && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
     }
-    setIsEditing(false);
+  }, [isEditing, folder.name]);
+
+  // Update local state when folder name changes
+  useEffect(() => {
+    setEditName(folder.name);
+  }, [folder.name]);
+
+  const handleSaveEdit = () => {
+    if (onSaveName) {
+      onSaveName(folder.id, editName);
+    } else {
+      // Fallback to old rename function
+      if (editName.trim() && editName.trim() !== folder.name) {
+        onRename(folder.id, editName.trim());
+      }
+    }
   };
 
   const handleCancelEdit = () => {
+    if (onCancelEdit) {
+      onCancelEdit(folder.id);
+    }
     setEditName(folder.name);
-    setIsEditing(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -58,6 +86,12 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
       handleSaveEdit();
     } else if (e.key === 'Escape') {
       handleCancelEdit();
+    }
+  };
+
+  const handleStartEditing = () => {
+    if (onStartEdit) {
+      onStartEdit(folder.id);
     }
   };
 
@@ -92,6 +126,9 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
     }
   };
 
+  const isInputEmpty = editName.trim() === '';
+  const showWarning = (isEditing || !folder.name) && isInputEmpty;
+
   return (
     <div
       ref={dropRef}
@@ -99,11 +136,10 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
       style={{
         width: '100%',
         borderRadius: '4px',
-        padding: '4px',
         transition: 'all 0.2s ease',
         position: 'relative',
-        minHeight: '40px',
-        // Visual feedback for drag over
+        display: 'flex',
+        alignItems: 'center',
         ...(isOver &&
           canDrop && {
             backgroundColor: 'rgba(34, 139, 230, 0.1)',
@@ -150,114 +186,147 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
 
         <MdFolder size={18} color="black" />
 
-        {isEditing ? (
+        {isEditing || !folder.name ? (
           <TextInput
+            ref={inputRef}
             value={editName}
             onChange={(e) => setEditName(e.currentTarget.value)}
             onKeyDown={handleKeyPress}
             onBlur={handleSaveEdit}
             size="xs"
             style={{ minWidth: '150px' }}
-            autoFocus
+            placeholder="הכנס שם התיקייה"
+            error={showWarning}
+            styles={{
+              input: {
+                direction: 'rtl',
+                textAlign: 'right',
+              },
+            }}
           />
         ) : (
-          <Text fw={500} onClick={() => setIsEditing(true)} style={{ cursor: 'pointer' }}>
+          <Text
+            fw={500}
+            onClick={handleStartEditing}
+            style={{
+              cursor: 'pointer',
+            }}
+          >
             {folder.name}
           </Text>
         )}
 
-        {/* Severity badges with counts */}
-        <Group gap={4} style={{ flexShrink: 0 }}>
-          {folder.criticalCount > 0 && (
-            <Badge
-              color={severityColorMap.critical}
-              variant="light"
-              radius="xl"
-              size="sm"
-              style={{
-                border: `2px solid ${getSeverityColor('critical')}`,
-                backgroundColor: 'transparent',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '2px',
-                padding: '0 8px',
-                height: '20px',
-              }}
-            >
-              {getSeverityIcon('critical')}
-              {folder.criticalCount}
-            </Badge>
-          )}
-          {folder.majorCount > 0 && (
-            <Badge
-              color={severityColorMap.major}
-              variant="light"
-              radius="xl"
-              size="sm"
-              style={{
-                border: `2px solid ${getSeverityColor('major')}`,
-                backgroundColor: 'transparent',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '2px',
-                padding: '0 8px',
-                height: '20px',
-              }}
-            >
-              {getSeverityIcon('major')}
-              {folder.majorCount}
-            </Badge>
-          )}
-          {folder.warningCount > 0 && (
-            <Badge
-              color={severityColorMap.warning}
-              variant="light"
-              radius="xl"
-              size="sm"
-              style={{
-                border: `2px solid ${getSeverityColor('warning')}`,
-                backgroundColor: 'transparent',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '2px',
-                padding: '0 8px',
-                height: '20px',
-              }}
-            >
-              {getSeverityIcon('warning')}
-              {folder.warningCount}
-            </Badge>
-          )}
-          {folder.disabledCount > 0 && (
-            <Badge
-              color={severityColorMap.disabled}
-              variant="light"
-              radius="xl"
-              size="sm"
-              style={{
-                border: `2px solid ${getSeverityColor('disabled')}`,
-                backgroundColor: 'transparent',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '2px',
-                padding: '0 8px',
-                height: '20px',
-                opacity: 0.7,
-              }}
-            >
-              {getSeverityIcon('disabled')}
-              {folder.disabledCount}
-            </Badge>
-          )}
-        </Group>
+        {/* Conditional rendering: Show alert if no name, otherwise show badges and buttons */}
+        {showWarning ? (
+          // Show warning alert when no name
+          <Text
+            size="xs"
+            c="red"
+            fw={500}
+            style={{
+              whiteSpace: 'nowrap',
+              direction: 'rtl',
+              flex: 1,
+              textAlign: 'center',
+            }}
+          >
+            ⚠️ ללא שם התיקייה תימחק
+          </Text>
+        ) : (
+          <>
+            <Group gap={4} style={{ flexShrink: 0 }}>
+              {folder.criticalCount > 0 && (
+                <Badge
+                  color={severityColorMap.critical}
+                  variant="light"
+                  radius="xl"
+                  size="sm"
+                  style={{
+                    border: `2px solid ${getSeverityColor('critical')}`,
+                    backgroundColor: 'transparent',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2px',
+                    padding: '0 8px',
+                    height: '20px',
+                  }}
+                >
+                  {getSeverityIcon('critical')}
+                  {folder.criticalCount}
+                </Badge>
+              )}
+              {folder.majorCount > 0 && (
+                <Badge
+                  color={severityColorMap.major}
+                  variant="light"
+                  radius="xl"
+                  size="sm"
+                  style={{
+                    border: `2px solid ${getSeverityColor('major')}`,
+                    backgroundColor: 'transparent',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2px',
+                    padding: '0 8px',
+                    height: '20px',
+                  }}
+                >
+                  {getSeverityIcon('major')}
+                  {folder.majorCount}
+                </Badge>
+              )}
+              {folder.warningCount > 0 && (
+                <Badge
+                  color={severityColorMap.warning}
+                  variant="light"
+                  radius="xl"
+                  size="sm"
+                  style={{
+                    border: `2px solid ${getSeverityColor('warning')}`,
+                    backgroundColor: 'transparent',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2px',
+                    padding: '0 8px',
+                    height: '20px',
+                  }}
+                >
+                  {getSeverityIcon('warning')}
+                  {folder.warningCount}
+                </Badge>
+              )}
+              {folder.disabledCount > 0 && (
+                <Badge
+                  color={severityColorMap.disabled}
+                  variant="light"
+                  radius="xl"
+                  size="sm"
+                  style={{
+                    border: `2px solid ${getSeverityColor('disabled')}`,
+                    backgroundColor: 'transparent',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2px',
+                    padding: '0 8px',
+                    height: '20px',
+                    opacity: 0.7,
+                  }}
+                >
+                  {getSeverityIcon('disabled')}
+                  {folder.disabledCount}
+                </Badge>
+              )}
+            </Group>
 
-        <ActionIcon variant="subtle" size="md" onClick={() => setIsEditing(true)} color="blue">
-          <MdEdit size={18} />
-        </ActionIcon>
+            <ActionIcon variant="subtle" size="md" onClick={handleStartEditing} color="blue">
+              <MdEdit size={18} />
+            </ActionIcon>
 
-        <ActionIcon variant="subtle" size="md" onClick={() => onDelete(folder.id)} color="red">
-          <MdDelete size={18} />
-        </ActionIcon>
+            <ActionIcon variant="subtle" size="md" onClick={() => onDelete(folder.id)} color="red">
+              <MdDelete size={18} />
+            </ActionIcon>
+          </>
+        )}
       </Group>
     </div>
   );

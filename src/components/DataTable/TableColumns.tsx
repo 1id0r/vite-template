@@ -21,8 +21,6 @@ function formatDateDMHour(dateString: string) {
   return `${day}/${month} ${hour}:${minute}`;
 }
 
-// In TableColumns.tsx, update the column sizes to respect the limits:
-
 export const useTableColumns = () => {
   const columnHelper = useMemo(() => createColumnHelper<TableRow>(), []);
 

@@ -279,7 +279,7 @@ export function DataTable() {
         data={tableData.originalData}
         folders={tableData.folderState.folders}
         hasSelectedRows={selectionInfo.selectedRowsCount > 0}
-        onCreateFolder={() => modalStates.setCreateFolderModalOpen(true)}
+        onCreateFolder={() => folderOperations.handleCreateFolder()} // Direct creation, no modal
         onAddToFolder={() => modalStates.setAddToFolderModalOpen(true)}
         onAddManualAlert={() => modalStates.setManualAlertModalOpen(true)}
       />
@@ -594,6 +594,13 @@ export function DataTable() {
                           onRename={folderOperations.handleRenameFolder}
                           onDelete={folderOperations.handleDeleteFolder}
                           onDropRow={folderOperations.handleMoveRowToFolder}
+                          // Add new props for inline editing
+                          isEditing={
+                            folderOperations.editingFolderId === (row.original as FolderItem).id
+                          }
+                          onStartEdit={folderOperations.handleStartEdit}
+                          onSaveName={folderOperations.handleSaveFolderName}
+                          onCancelEdit={folderOperations.handleCancelFolderEdit}
                         />
                       </div>
                     ) : (
@@ -708,11 +715,7 @@ export function DataTable() {
         onSave={tableData.handleAddManualAlert}
       />
 
-      <CreateFolderModal
-        opened={modalStates.createFolderModalOpen}
-        onClose={() => modalStates.setCreateFolderModalOpen(false)}
-        onCreateFolder={folderOperations.handleCreateFolder}
-      />
+      {/* Remove CreateFolderModal since we're doing inline creation */}
 
       <AddToFolderModal
         opened={modalStates.addToFolderModalOpen}

@@ -357,7 +357,7 @@ interface FolderActionsProps {
   onAddToFolder: () => void;
   hasSelectedRows: boolean;
 }
-
+// Update FolderComponents.tsx - FolderActions component
 export const FolderActions: React.FC<FolderActionsProps> = ({
   onCreateFolder,
   onAddToFolder,
@@ -384,7 +384,7 @@ export const FolderActions: React.FC<FolderActionsProps> = ({
         <Menu.Item
           style={{ direction: 'rtl', textAlign: 'right' }}
           leftSection={<MdAdd size={16} />}
-          onClick={onCreateFolder}
+          onClick={onCreateFolder} // This now creates folder directly, no modal
         >
           צור תיקייה חדשה
         </Menu.Item>
