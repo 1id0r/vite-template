@@ -2,12 +2,6 @@ import React, { useMemo } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { Checkbox, Text, Tooltip } from '@mantine/core';
 import { EnvironmentBadge, ImpactBadge, SeverityBadge } from './Badges';
-import {
-  createDateSortFn,
-  createHebrewFirstSortFn,
-  createImpactSortFn,
-  createSeveritySortFn,
-} from './SortingUtils';
 import { DataItem, isFolder, TableRow } from './types';
 
 // Format date as d/m and hour:minute
@@ -62,7 +56,7 @@ export const useTableColumns = () => {
         enableColumnFilter: false,
         enableHiding: false,
         enableSorting: true,
-        sortingFn: createHebrewFirstSortFn(),
+        // Remove custom sortingFn - we handle sorting manually
         size: 150,
         minSize: 50,
         maxSize: 300,
@@ -91,7 +85,7 @@ export const useTableColumns = () => {
         enableColumnFilter: false,
         enableHiding: false,
         enableSorting: true,
-        sortingFn: createHebrewFirstSortFn(),
+        // Remove custom sortingFn - we handle sorting manually
         size: 300,
         minSize: 100,
         maxSize: 500, // Special max width for description
@@ -110,7 +104,7 @@ export const useTableColumns = () => {
         enableColumnFilter: false,
         enableHiding: false,
         enableSorting: true,
-        sortingFn: createDateSortFn(),
+        // Remove custom sortingFn - we handle sorting manually
         size: 150,
         minSize: 50,
         maxSize: 300,
@@ -129,7 +123,7 @@ export const useTableColumns = () => {
         enableColumnFilter: false,
         enableHiding: true,
         enableSorting: true,
-        sortingFn: createHebrewFirstSortFn(),
+        // Remove custom sortingFn - we handle sorting manually
         size: 250,
         minSize: 50,
         maxSize: 300,
@@ -148,7 +142,7 @@ export const useTableColumns = () => {
         enableColumnFilter: false,
         enableHiding: true,
         enableSorting: true,
-        sortingFn: createDateSortFn(),
+        // Remove custom sortingFn - we handle sorting manually
         size: 150,
         minSize: 50,
         maxSize: 300,
@@ -163,7 +157,7 @@ export const useTableColumns = () => {
         enableColumnFilter: false,
         enableHiding: true,
         enableSorting: true,
-        sortingFn: createImpactSortFn(),
+        // Remove custom sortingFn - we handle sorting manually
         size: 120,
         minSize: 50,
         maxSize: 300,
@@ -178,7 +172,7 @@ export const useTableColumns = () => {
         enableColumnFilter: true,
         enableHiding: true,
         enableSorting: true,
-        sortingFn: createHebrewFirstSortFn(),
+        // Remove custom sortingFn - we handle sorting manually
         filterFn: (row, columnId, filterValue) => {
           if (!filterValue || isFolder(row.original)) return true;
           const environment = (row.original as DataItem).environment;
@@ -202,7 +196,7 @@ export const useTableColumns = () => {
         enableColumnFilter: true,
         enableHiding: true,
         enableSorting: true,
-        sortingFn: createHebrewFirstSortFn(),
+        // Remove custom sortingFn - we handle sorting manually
         size: 120,
         minSize: 50,
         maxSize: 300,
@@ -221,7 +215,7 @@ export const useTableColumns = () => {
         enableColumnFilter: false,
         enableHiding: true,
         enableSorting: true,
-        sortingFn: createHebrewFirstSortFn(),
+        // Remove custom sortingFn - we handle sorting manually
         size: 150,
         minSize: 50,
         maxSize: 300,
@@ -236,7 +230,7 @@ export const useTableColumns = () => {
         enableColumnFilter: true,
         enableHiding: true,
         enableSorting: true,
-        sortingFn: createSeveritySortFn(),
+        // Remove custom sortingFn - we handle sorting manually
         filterFn: (row, columnId, filterValue) => {
           if (!filterValue || isFolder(row.original)) return true;
           const severity = (row.original as DataItem).severity;

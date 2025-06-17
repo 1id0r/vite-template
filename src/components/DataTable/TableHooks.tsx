@@ -35,10 +35,12 @@ export const useTableData = () => {
 
   const [displayData, setDisplayData] = useState<TableRow[]>([]);
   const [tableVersion, setTableVersion] = useState(0);
+  const [sortingState, setSortingState] = useState<SortingState>([]);
 
+  // Update generateTableRows call to include sorting state
   const memoizedDisplayData = useMemo(
-    () => generateTableRows(folderState, originalData),
-    [folderState, originalData]
+    () => generateTableRows(folderState, originalData, sortingState),
+    [folderState, originalData, sortingState]
   );
 
   useEffect(() => {
@@ -69,6 +71,8 @@ export const useTableData = () => {
     tableVersion,
     setTableVersion,
     handleAddManualAlert,
+    sortingState,
+    setSortingState,
   };
 };
 
@@ -141,7 +145,6 @@ export const useContextMenu = () => {
 };
 
 // Hook for folder operations
-// Update TableHooks.tsx - useFolderOperations hook
 export const useFolderOperations = (
   folderState: FolderState,
   setFolderState: React.Dispatch<React.SetStateAction<FolderState>>,
@@ -325,11 +328,13 @@ export const useFolderOperations = (
     handleMoveRowToUnassigned,
   };
 };
+
 // Hook for table instance and related computations
 export const useTable = (
   displayData: TableRow[],
   columns: any[],
-  tableState: ReturnType<typeof useTableState>
+  tableState: ReturnType<typeof useTableState>,
+  setSortingState: (sorting: SortingState) => void
 ) => {
   const {
     sorting,
@@ -348,6 +353,17 @@ export const useTable = (
     setColumnSizing,
   } = tableState;
 
+  // Custom sorting handler that updates both table sorting and our custom sorting
+  const handleSortingChange = useCallback(
+    (updaterOrValue: any) => {
+      const newSorting =
+        typeof updaterOrValue === 'function' ? updaterOrValue(sorting) : updaterOrValue;
+      setSorting(newSorting);
+      setSortingState(newSorting);
+    },
+    [sorting, setSorting, setSortingState]
+  );
+
   const table = useReactTable<TableRow>({
     data: displayData,
     columns,
@@ -361,19 +377,21 @@ export const useTable = (
       columnSizing,
     },
     onColumnOrderChange: setColumnOrder,
-    onSortingChange: setSorting,
+    onSortingChange: handleSortingChange, // Use our custom handler
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onColumnSizingChange: setColumnSizing,
     getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    // Remove getSortedRowModel since we handle sorting manually
     getCoreRowModel: getCoreRowModel(),
     enableColumnResizing: true,
     columnResizeMode: 'onChange',
     enableRowSelection: (row) => !isFolder(row.original),
     getRowId: (row) => row.id,
+    // Enable manual sorting - this tells TanStack to not sort the data
+    manualSorting: true,
   });
 
   // Initialize column order

@@ -55,11 +55,12 @@ export function DataTable() {
     folderOperations.handleMoveRowToUnassigned
   );
 
-  // Table instance and computations
+  // Table instance and computations (UPDATED)
   const { table, selectionInfo, allColumns, showAllColumns } = useTable(
     tableData.displayData,
     columns,
-    tableState
+    tableState,
+    tableData.setSortingState // Pass the setSortingState function
   );
 
   // Unassigned area drop target

@@ -45,29 +45,134 @@ export const createInitialFolderState = (data: DataItem[]): FolderState => {
   };
 };
 
-// Generate table rows for display (folders + their contents + unassigned rows)
-export const generateTableRows = (folderState: FolderState, allData: DataItem[]): TableRow[] => {
+// Helper function to sort data items based on current table sorting
+const sortDataItems = (items: DataItem[], sortingState: any[]): DataItem[] => {
+  if (!sortingState || sortingState.length === 0) {
+    return items;
+  }
+
+  return [...items].sort((a, b) => {
+    for (const sort of sortingState) {
+      const { id: columnId, desc } = sort;
+
+      let aValue = a[columnId as keyof DataItem];
+      let bValue = b[columnId as keyof DataItem];
+
+      // Handle arrays (like identities)
+      if (Array.isArray(aValue)) aValue = aValue.join(', ');
+      if (Array.isArray(bValue)) bValue = bValue.join(', ');
+
+      // Convert to strings for comparison
+      const aString = String(aValue || '').trim();
+      const bString = String(bValue || '').trim();
+
+      let comparison = 0;
+
+      // Date sorting for specific columns
+      if (columnId === 'startTime' || columnId === 'lastUpdated') {
+        const aDate = new Date(aString);
+        const bDate = new Date(bString);
+
+        if (!isNaN(aDate.getTime()) && !isNaN(bDate.getTime())) {
+          comparison = aDate.getTime() - bDate.getTime();
+        } else {
+          comparison = aString.localeCompare(bString);
+        }
+      }
+      // Severity sorting
+      else if (columnId === 'severity') {
+        const severityOrder = { critical: 4, major: 3, warning: 2, disabled: 1 };
+        const aRank = severityOrder[aValue as keyof typeof severityOrder] || 0;
+        const bRank = severityOrder[bValue as keyof typeof severityOrder] || 0;
+        comparison = bRank - aRank; // Higher severity first
+      }
+      // Impact sorting
+      else if (columnId === 'impact') {
+        const impactOrder = { high: 3, medium: 2, low: 1 };
+        const aRank = impactOrder[aValue as keyof typeof impactOrder] || 0;
+        const bRank = impactOrder[bValue as keyof typeof impactOrder] || 0;
+        comparison = bRank - aRank; // Higher impact first
+      }
+      // Text sorting with Hebrew support
+      else {
+        // Check if text starts with Hebrew
+        const startsWithHebrew = (text: string): boolean => {
+          if (!text) return false;
+          const firstChar = text.trim().charAt(0);
+          return /[\u0590-\u05FF]/.test(firstChar);
+        };
+
+        const aIsHebrew = startsWithHebrew(aString);
+        const bIsHebrew = startsWithHebrew(bString);
+
+        if (aIsHebrew === bIsHebrew) {
+          // Both same script type
+          if (aIsHebrew) {
+            comparison = aString.localeCompare(bString, 'he-IL', {
+              sensitivity: 'base',
+              ignorePunctuation: true,
+            });
+          } else {
+            comparison = aString.localeCompare(bString, 'en-US', {
+              sensitivity: 'base',
+              ignorePunctuation: true,
+            });
+          }
+        } else {
+          // Hebrew first, then English
+          comparison = aIsHebrew ? -1 : 1;
+        }
+      }
+
+      if (comparison !== 0) {
+        return desc ? -comparison : comparison;
+      }
+    }
+    return 0;
+  });
+};
+
+// Generate table rows for display with proper sorting (UPDATED)
+export const generateTableRows = (
+  folderState: FolderState,
+  allData: DataItem[],
+  sortingState?: any[]
+): TableRow[] => {
   const rows: TableRow[] = [];
 
   // Create a map of data by ID for quick lookup
   const dataMap = new Map(allData.map((item) => [item.id, item]));
 
+  // Sort folders alphabetically by name
+  const sortedFolders = [...folderState.folders].sort((a, b) =>
+    a.name.localeCompare(b.name, 'he-IL', {
+      sensitivity: 'base',
+      ignorePunctuation: true,
+    })
+  );
+
   // Add folders and their contents
-  folderState.folders.forEach((folder) => {
+  sortedFolders.forEach((folder) => {
     // Calculate severity counts for the folder
     let criticalCount = 0;
     let majorCount = 0;
     let warningCount = 0;
-    let disabledCount = 0; // Added disabled count
+    let disabledCount = 0;
 
-    folder.rowIds.forEach((rowId) => {
-      const dataItem = dataMap.get(rowId);
-      if (dataItem) {
-        if (dataItem.severity === 'critical') criticalCount++;
-        else if (dataItem.severity === 'major') majorCount++;
-        else if (dataItem.severity === 'warning') warningCount++;
-        else if (dataItem.severity === 'disabled') disabledCount++; // Count disabled items
-      }
+    // Get folder items and apply sorting
+    const folderItems = folder.rowIds
+      .map((rowId) => dataMap.get(rowId))
+      .filter(Boolean) as DataItem[];
+
+    // Sort items within the folder
+    const sortedFolderItems = sortDataItems(folderItems, sortingState || []);
+
+    // Calculate counts from sorted items
+    sortedFolderItems.forEach((dataItem) => {
+      if (dataItem.severity === 'critical') criticalCount++;
+      else if (dataItem.severity === 'major') majorCount++;
+      else if (dataItem.severity === 'warning') warningCount++;
+      else if (dataItem.severity === 'disabled') disabledCount++;
     });
 
     // Add folder row with counts
@@ -76,28 +181,26 @@ export const generateTableRows = (folderState: FolderState, allData: DataItem[])
       criticalCount,
       majorCount,
       warningCount,
-      disabledCount, // Include disabled count
+      disabledCount,
     } as FolderItem);
 
-    // If folder is expanded, add its rows
+    // If folder is expanded, add its sorted rows
     if (folderState.expandedFolders.has(folder.id)) {
-      folder.rowIds.forEach((rowId, index) => {
-        const dataItem = dataMap.get(rowId);
-        if (dataItem) {
-          rows.push({
-            ...dataItem,
-            isInFolder: true,
-            folderId: folder.id,
-            isFirstInFolderGroup: index === 0,
-            isLastInFolderGroup: index === folder.rowIds.length - 1,
-          });
-        }
+      sortedFolderItems.forEach((dataItem, index) => {
+        rows.push({
+          ...dataItem,
+          isInFolder: true,
+          folderId: folder.id,
+          isFirstInFolderGroup: index === 0,
+          isLastInFolderGroup: index === sortedFolderItems.length - 1,
+        });
       });
     }
   });
 
-  // Add unassigned rows
-  folderState.unassignedRows.forEach((row) => {
+  // Add sorted unassigned rows at the end
+  const sortedUnassignedRows = sortDataItems(folderState.unassignedRows, sortingState || []);
+  sortedUnassignedRows.forEach((row) => {
     rows.push(row);
   });
 
