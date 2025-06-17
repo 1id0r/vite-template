@@ -79,11 +79,12 @@ export const canDropInFolder = (dragData: DragData, folderId: string, folderStat
     return false;
   }
   
-  // Check if the row is already in this folder
+  // Check if the row is already in this specific folder
   if (targetFolder.rowIds.includes(dragData.id)) {
     return false;
   }
   
+  // Allow dropping - even if the row is in another folder or unassigned
   return true;
 };
 

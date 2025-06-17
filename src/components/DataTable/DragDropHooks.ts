@@ -60,7 +60,10 @@ export const useDropTarget = (
       e.preventDefault();
       
       const dragData = parseDragData(e.dataTransfer.getData(DRAG_TYPES.ROW));
-      if (!dragData) return;
+      if (!dragData) {
+        setCanDrop(false);
+        return;
+      }
 
       const canDropHere = canDropInFolder(dragData, folderId, folderState);
       setCanDrop(canDropHere);

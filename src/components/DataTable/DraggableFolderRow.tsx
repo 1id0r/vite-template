@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { FiEdit } from 'react-icons/fi';
 import {
-  MdAdd,
   MdBlock,
   MdCancel,
-  MdCreateNewFolder,
   MdDelete,
-  MdEdit,
   MdFolder,
   MdInfo,
   MdKeyboardArrowDown,
@@ -139,6 +137,7 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
         transition: 'all 0.2s ease',
         position: 'relative',
         display: 'flex',
+
         alignItems: 'center',
         ...(isOver &&
           canDrop && {
@@ -148,7 +147,7 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
         ...(isOver &&
           !canDrop && {
             backgroundColor: 'rgba(250, 82, 82, 0.1)',
-            border: '2px dashed #fa5252',
+            border: '2px dashed #228be6',
           }),
       }}
     >
@@ -161,7 +160,7 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
             right: '8px',
             fontSize: '12px',
             fontWeight: 500,
-            color: canDrop ? '#228be6' : '#fa5252',
+            color: '#228be6',
             backgroundColor: 'white',
             padding: '2px 6px',
             borderRadius: '4px',
@@ -169,10 +168,9 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
             zIndex: 10,
           }}
         >
-          {canDrop ? 'הוסף לתיקייה' : 'לא ניתן להוסיף'}
+          הוסף לתיקייה
         </div>
       )}
-
       <Group
         gap="xs"
         wrap="nowrap"
@@ -180,11 +178,18 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
           width: '100%',
         }}
       >
-        <ActionIcon variant="subtle" size="sm" onClick={() => onToggleExpansion(folder.id)}>
+        <ActionIcon
+          variant="subtle"
+          size="sm"
+          color="#8E9CC5"
+          onClick={() => onToggleExpansion(folder.id)}
+        >
           {isExpanded ? <MdKeyboardArrowDown size={18} /> : <MdKeyboardArrowRight size={18} />}
         </ActionIcon>
-
-        <MdFolder size={18} color="black" />
+        <ActionIcon variant="subtle" size="md" onClick={handleStartEditing} color="blue">
+          <FiEdit color="#8E9CC5" size={18} />
+        </ActionIcon>
+        {/* <MdFolder size={18} color="black" /> */}
 
         {isEditing || !folder.name ? (
           <TextInput
@@ -194,6 +199,7 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
             onKeyDown={handleKeyPress}
             onBlur={handleSaveEdit}
             size="xs"
+            color="#e63946"
             style={{ minWidth: '150px' }}
             placeholder="הכנס שם התיקייה"
             error={showWarning}
@@ -206,7 +212,8 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
           />
         ) : (
           <Text
-            fw={500}
+            fw={400}
+            c="#3E4758"
             onClick={handleStartEditing}
             style={{
               cursor: 'pointer',
@@ -215,18 +222,15 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
             {folder.name}
           </Text>
         )}
-
-        {/* Conditional rendering: Show alert if no name, otherwise show badges and buttons */}
         {showWarning ? (
           // Show warning alert when no name
           <Text
             size="xs"
-            c="red"
+            c="#e63946"
             fw={500}
             style={{
               whiteSpace: 'nowrap',
               direction: 'rtl',
-              flex: 1,
               textAlign: 'center',
             }}
           >
@@ -242,13 +246,14 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
                   radius="xl"
                   size="sm"
                   style={{
-                    border: `2px solid ${getSeverityColor('critical')}`,
-                    backgroundColor: 'transparent',
+                    border: `1px solid #E54644`,
+                    backgroundColor: '#FFE4E4',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '2px',
                     padding: '0 8px',
-                    height: '20px',
+                    height: '24px',
+                    width: '40px',
                   }}
                 >
                   {getSeverityIcon('critical')}
@@ -262,13 +267,14 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
                   radius="xl"
                   size="sm"
                   style={{
-                    border: `2px solid ${getSeverityColor('major')}`,
-                    backgroundColor: 'transparent',
+                    border: `1px solid #E9A91D`,
+                    backgroundColor: '#FEFCE8',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '2px',
                     padding: '0 8px',
-                    height: '20px',
+                    height: '24px',
+                    width: '40px',
                   }}
                 >
                   {getSeverityIcon('major')}
@@ -282,13 +288,14 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
                   radius="xl"
                   size="sm"
                   style={{
-                    border: `2px solid ${getSeverityColor('warning')}`,
-                    backgroundColor: 'transparent',
+                    border: `1px solid #3075F6`,
+                    backgroundColor: '#F0F9FF',
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '2px',
                     padding: '0 8px',
-                    height: '20px',
+                    height: '24px',
+                    width: '40px',
                   }}
                 >
                   {getSeverityIcon('warning')}
@@ -308,7 +315,8 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
                     alignItems: 'center',
                     gap: '2px',
                     padding: '0 8px',
-                    height: '20px',
+                    height: '24px',
+                    width: '40px',
                     opacity: 0.7,
                   }}
                 >
@@ -318,11 +326,12 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
               )}
             </Group>
 
-            <ActionIcon variant="subtle" size="md" onClick={handleStartEditing} color="blue">
-              <MdEdit size={18} />
-            </ActionIcon>
-
-            <ActionIcon variant="subtle" size="md" onClick={() => onDelete(folder.id)} color="red">
+            <ActionIcon
+              variant="subtle"
+              size="md"
+              onClick={() => onDelete(folder.id)}
+              color="#E54644"
+            >
               <MdDelete size={18} />
             </ActionIcon>
           </>

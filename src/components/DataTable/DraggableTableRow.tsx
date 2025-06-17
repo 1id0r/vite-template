@@ -75,7 +75,7 @@ export const DraggableTableRow: React.FC<DraggableTableRowProps> = ({
                 borderLeft: '1px solid #1f3a8a',
                 borderRight: '1px solid #1f3a8a',
                 borderTop: 'none',
-                borderBottom: row.original.isLastInFolderGroup ? '1px solid #1f3a8a' : 'none',
+                borderBottom: row.original.isLastInFolderGroup ? '1px solid #8E9CC5' : 'none',
                 borderTopRightRadius: '8px',
                 borderTopLeftRadius: '8px',
                 borderBottomRightRadius: '8px',
@@ -114,7 +114,7 @@ export const DraggableTableRow: React.FC<DraggableTableRowProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 userSelect: 'auto',
-                // Explicitly no borders on cells
+
                 border: 'none',
               }}
             >

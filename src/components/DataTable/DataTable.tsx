@@ -198,70 +198,6 @@ export function DataTable() {
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Inject folder border styles
-  useEffect(() => {
-    const folderGroupStyles = `
-      .folder-group {
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
-        overflow: hidden;
-        margin-bottom: 8px;
-      }
-      
-      .folder-header {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #e9ecef;
-        padding: 12px 16px;
-        font-weight: bold;
-      }
-      
-      .folder-header.expanded {
-        border-bottom: 1px solid #e9ecef;
-        border-bottom-left-radius: 0;
-        border-bottom-right-radius: 0;
-      }
-      
-      .folder-header.collapsed {
-        border-bottom: none;
-      }
-      
-      .folder-content {
-        background-color: white;
-      }
-      
-      .folder-item:not(:last-child) {
-        border-bottom: 1px solid #f0f0f0;
-      }
-      
-      .folder-item:last-child {
-        border-bottom-left-radius: 6px;
-        border-bottom-right-radius: 6px;
-      }
-    `;
-
-    const styleId = 'folder-group-styles';
-
-    // Remove existing styles if any
-    const existingStyles = document.getElementById(styleId);
-    if (existingStyles) {
-      existingStyles.remove();
-    }
-
-    // Create and inject new styles
-    const styleElement = document.createElement('style');
-    styleElement.id = styleId;
-    styleElement.textContent = folderGroupStyles;
-    document.head.appendChild(styleElement);
-
-    // Cleanup on unmount
-    return () => {
-      const styles = document.getElementById(styleId);
-      if (styles) {
-        styles.remove();
-      }
-    };
-  }, []);
-
   return (
     <div style={{ width: '100%', direction: 'rtl' }}>
       <TableHeader
@@ -311,34 +247,11 @@ export function DataTable() {
         }}
         {...unassignedDropTarget.dropProps}
       >
-        {/* Drop zone indicator for unassigned area */}
-        {unassignedDropTarget.isOver && (
-          <div
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              fontSize: '16px',
-              fontWeight: 600,
-              color: unassignedDropTarget.canDrop ? '#228be6' : '#fa5252',
-              backgroundColor: 'white',
-              padding: '12px 24px',
-              borderRadius: '8px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              zIndex: 1000,
-              pointerEvents: 'none',
-              border: `2px solid ${unassignedDropTarget.canDrop ? '#228be6' : '#fa5252'}`,
-            }}
-          >
-            {unassignedDropTarget.canDrop ? 'שחרר כדי להסיר מהתיקייה' : 'לא ניתן להסיר'}
-          </div>
-        )}
         <div
           ref={tableContainerRef}
           style={{
             width: '100%',
-            height: '75vh',
+            height: '80vh',
             overflow: 'auto',
             direction: 'rtl',
             contain: 'strict',
@@ -354,7 +267,7 @@ export function DataTable() {
               zIndex: 10,
               width: '100%',
               minWidth: `${totalWidth}px`,
-              borderBottom: '1px solid #e9ecef',
+              // borderBottom: '1px solid #e9ecef',
             }}
           >
             {table.getHeaderGroups().map((headerGroup) => (
@@ -379,16 +292,16 @@ export function DataTable() {
                         width: `${headerWidth}px`,
                         minWidth: `${headerWidth}px`,
                         maxWidth: `${headerWidth}px`,
-                        padding: '2px 6px',
-                        fontWeight: 500,
+                        padding: '4px',
+                        fontWeight: 400,
+                        color: '#3E4758',
                         backgroundColor: 'white',
                         borderLeft: 'none',
                         userSelect: 'none',
                         textAlign: 'center',
                         direction: 'rtl',
-                        transition: 'background-color 0.2s ease',
                         display: 'flex',
-                        alignItems: 'center',
+                        alignItems: '',
                         justifyContent: 'space-between',
                       }}
                       onMouseEnter={(e) => {
@@ -430,13 +343,12 @@ export function DataTable() {
 
                             const onMouseMove = (moveEvent: MouseEvent) => {
                               const delta = startX - moveEvent.clientX;
-                              let newSize = Math.max(50, startSize + delta); // Minimum width of 50px
+                              let newSize = Math.max(50, startSize + delta);
 
-                              // Apply column-specific maximum width limits
                               if (columnId === 'description') {
-                                newSize = Math.min(newSize, 500); // Description max width: 500px
+                                newSize = Math.min(newSize, 500);
                               } else {
-                                newSize = Math.min(newSize, 300); // All other columns max width: 300px
+                                newSize = Math.min(newSize, 300);
                               }
 
                               table.setColumnSizing((prev) => ({
@@ -455,7 +367,7 @@ export function DataTable() {
                           }}
                           style={{
                             position: 'absolute',
-                            left: '-2px',
+                            left: '0',
                             top: 0,
                             height: '100%',
                             width: '4px',
@@ -464,12 +376,9 @@ export function DataTable() {
                             userSelect: 'none',
                             touchAction: 'none',
                             zIndex: 1,
-                            borderLeft: '2px solid transparent',
-                            transition: 'border-color 0.2s ease',
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.borderLeft = '2px solid #228be6';
-                            e.currentTarget.style.background = 'rgba(34, 139, 230, 0.1)';
+                            e.currentTarget.style.borderLeft = '2px solid #8E9CC5';
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.borderLeft = '2px solid transparent';
@@ -500,6 +409,18 @@ export function DataTable() {
                 ? getFolderRowStyle()
                 : getRowStyleBySeverity((row.original as DataItem).severity);
 
+              const isFirstUnassignedRow =
+                !isRowFolder &&
+                !(row.original as DataItem).isInFolder &&
+                virtualRow.index > 0 &&
+                tableRows
+                  .slice(0, virtualRow.index)
+                  .every(
+                    (prevRow) =>
+                      isFolder(prevRow.original) ||
+                      (isDataItem(prevRow.original) && prevRow.original.isInFolder)
+                  );
+
               // Get drag props for data rows (no hooks here)
               let dragProps = {};
               if (!isRowFolder) {
@@ -520,10 +441,11 @@ export function DataTable() {
                     display: 'flex',
                     direction: 'rtl',
                     transform: `translateY(${virtualRow.start}px) ${row.getIsSelected() ? 'scale(0.99)' : 'scale(1)'}`,
-                    transition: 'opacity 0.1s ease, transform 0.1s ease',
                     cursor: !isRowFolder ? 'pointer' : undefined,
                     paddingTop: '0px',
                     paddingRight: '0px',
+                    // Add margin-top for first unassigned row
+                    marginTop: isFirstUnassignedRow ? '3px' : '0px',
                     // No bottom padding for folders when expanded, and no padding for folder items
                     paddingBottom:
                       (isRowFolder &&
@@ -534,7 +456,7 @@ export function DataTable() {
                         row.original.folderId &&
                         tableData.folderState.expandedFolders.has(row.original.folderId))
                         ? '0px' // No margin for expanded folders and their items
-                        : '2px', // Keep margin for normal standalone rows and collapsed folders
+                        : '3px', // Keep margin for normal standalone rows and collapsed folders
                   }}
                   onClick={() => handleRowClick(row.original)}
                   onContextMenu={(e) => !isRowFolder && handleContextMenu(e, row.original.id)}
@@ -554,7 +476,7 @@ export function DataTable() {
                           row.original.folderId &&
                           tableData.folderState.expandedFolders.has(row.original.folderId))
                           ? 'calc(100%)' // Full height for expanded folders and their items (no margin)
-                          : 'calc(100% - 8px)', // Reduced height for normal rows and collapsed folders (creates margin)
+                          : 'calc(100% - 4px)', // Reduced height for normal rows and collapsed folders (creates margin)
                       display: 'flex',
                       direction: 'rtl',
                       borderRadius: '8px',
@@ -568,9 +490,13 @@ export function DataTable() {
                           padding: '12px 16px',
                           direction: 'rtl',
                           position: 'relative',
-                          backgroundColor: '#f8f9fa',
+                          backgroundColor: '#FFFFFF80',
                           borderRadius: '8px',
-                          border: '2px solid #e9ecef',
+                          border: '1px solid #8E9CC5',
+                          marginTop: '2px', // Add margin for folder header
+                          display: 'flex',
+                          alignItems: 'center', // Center the folder content vertically
+                          minHeight: '56px', // Match the row height
                           // Folder border styling
                           ...(isFolder(row.original) &&
                           tableData.folderState.expandedFolders.has(row.original.id)
@@ -581,7 +507,12 @@ export function DataTable() {
                                 borderBottomRightRadius: '0',
                                 marginBottom: '0', // Remove any margin below folder
                               }
-                            : {}),
+                            : {
+                                border: '1px solid #8E9CC5',
+                                borderBottom: '1px solid #8E9CC5',
+                                borderBottomLeftRadius: '8px',
+                                borderBottomRightRadius: '8px',
+                              }),
                         }}
                       >
                         <DraggableFolderRow
@@ -627,7 +558,7 @@ export function DataTable() {
                           tableData.folderState.expandedFolders.has(row.original.folderId)
                             ? {
                                 // Items in expanded folders
-                                border: '2px solid #e9ecef',
+                                border: '1px solid #8E9CC5',
                                 borderTop: 'none', // Connect to folder above
                                 borderTopLeftRadius: '0',
                                 borderTopRightRadius: '0',
@@ -638,7 +569,7 @@ export function DataTable() {
                                   ? '6px'
                                   : '0',
                                 borderBottom: row.original.isLastInFolderGroup
-                                  ? '2px solid #e9ecef'
+                                  ? '1px solid ##8E9CC5'
                                   : 'none',
                                 margin: '0', // Remove any margins
                                 // Remove separator between folder items to eliminate gaps

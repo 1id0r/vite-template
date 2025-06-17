@@ -54,7 +54,7 @@ export const useTableColumns = () => {
         cell: (info) => {
           if (isFolder(info.row.original)) return null;
           return (
-            <Text c="grey" fw={600}>
+            <Text c="#3E4758" fw={400}>
               {info.getValue()}
             </Text>
           );
@@ -75,7 +75,8 @@ export const useTableColumns = () => {
           return (
             <Tooltip label={info.getValue()} multiline w={300} withArrow>
               <Text
-                c="black"
+                c="#3E4758"
+                fw={400}
                 style={{
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
@@ -100,7 +101,11 @@ export const useTableColumns = () => {
         header: 'זמן התחלה',
         cell: (info) => {
           if (isFolder(info.row.original)) return null;
-          return <Text color="black">{formatDateDMHour(info.getValue())}</Text>;
+          return (
+            <Text c="#3E4758" fw={400}>
+              {formatDateDMHour(info.getValue())}
+            </Text>
+          );
         },
         enableColumnFilter: false,
         enableHiding: false,
@@ -115,7 +120,11 @@ export const useTableColumns = () => {
         header: 'היררכיה',
         cell: (info) => {
           if (isFolder(info.row.original)) return null;
-          return <Text color="black">{info.getValue()}</Text>;
+          return (
+            <Text c="#3E4758" fw={400}>
+              {info.getValue()}
+            </Text>
+          );
         },
         enableColumnFilter: false,
         enableHiding: true,
@@ -130,7 +139,11 @@ export const useTableColumns = () => {
         header: 'עודכן לאחרונה',
         cell: (info) => {
           if (isFolder(info.row.original)) return null;
-          return <Text c="black">{formatDateDMHour(info.getValue())}</Text>;
+          return (
+            <Text c="#3E4758" fw={400}>
+              {formatDateDMHour(info.getValue())}
+            </Text>
+          );
         },
         enableColumnFilter: false,
         enableHiding: true,
@@ -180,7 +193,11 @@ export const useTableColumns = () => {
         header: 'מקור התראה',
         cell: (info) => {
           if (isFolder(info.row.original)) return null;
-          return <Text c="black">{info.getValue()}</Text>;
+          return (
+            <Text c="#3E4758" fw={400}>
+              {info.getValue()}
+            </Text>
+          );
         },
         enableColumnFilter: true,
         enableHiding: true,
@@ -195,7 +212,11 @@ export const useTableColumns = () => {
         header: 'SN מזהה',
         cell: (info) => {
           if (isFolder(info.row.original)) return null;
-          return <Text c="black">{info.getValue()}</Text>;
+          return (
+            <Text c="#3E4758" fw={400}>
+              {info.getValue()}
+            </Text>
+          );
         },
         enableColumnFilter: false,
         enableHiding: true,
