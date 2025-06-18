@@ -251,8 +251,8 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '2px',
-                    padding: '0 8px',
-                    height: '24px',
+                    padding: '0 4px',
+                    height: '22px',
                     width: '40px',
                   }}
                 >
@@ -273,7 +273,7 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
                     alignItems: 'center',
                     gap: '2px',
                     padding: '0 8px',
-                    height: '24px',
+                    height: '22px',
                     width: '40px',
                   }}
                 >
@@ -294,7 +294,7 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
                     alignItems: 'center',
                     gap: '2px',
                     padding: '0 8px',
-                    height: '24px',
+                    height: '22px',
                     width: '40px',
                   }}
                 >
@@ -315,7 +315,7 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
                     alignItems: 'center',
                     gap: '2px',
                     padding: '0 8px',
-                    height: '24px',
+                    height: '22px',
                     width: '40px',
                     opacity: 0.7,
                   }}
@@ -328,7 +328,7 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
 
             <ActionIcon
               variant="subtle"
-              size="md"
+              size="sm"
               onClick={() => onDelete(folder.id)}
               color="#E54644"
             >
