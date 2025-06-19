@@ -4,8 +4,8 @@ import { createDragProps } from './DragDropHooks';
 import { DataItem, FolderState, getRowStyleBySeverity, isDataItem } from './types';
 
 interface DraggableTableRowProps {
-  row: any; // TanStack table row
-  virtualRow: any; // Virtual row from virtualizer
+  row: any;
+  virtualRow: any;
   shouldStretchColumns: boolean;
   stretchRatio: number;
   folderState: FolderState;
@@ -42,8 +42,6 @@ export const DraggableTableRow: React.FC<DraggableTableRowProps> = ({
         transform: `translateY(${virtualRow.start}px) ${row.getIsSelected() ? 'scale(0.99)' : 'scale(1)'}`,
         transition: 'opacity 0.1s ease, transform 0.1s ease',
         cursor: 'grab',
-        paddingTop: '0px',
-        paddingRight: '0px',
         paddingBottom:
           isDataItem(row.original) &&
           row.original.isInFolder &&
@@ -114,7 +112,6 @@ export const DraggableTableRow: React.FC<DraggableTableRowProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 userSelect: 'auto',
-
                 border: 'none',
               }}
             >

@@ -10,6 +10,7 @@ interface ColumnSelectorProps {
   columnOrder: string[];
   setColumnOrder: (order: string[]) => void;
   showAllColumns: () => void;
+  resetToDefaultColumns: () => void;
 }
 
 // Updated to include startTime, description, and objectId as pinned
@@ -22,6 +23,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   columnOrder,
   setColumnOrder,
   showAllColumns,
+  resetToDefaultColumns,
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [opened, setOpened] = useState(false);
@@ -159,13 +161,16 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: 8 }}>
+                <Button size="xs" variant="subtle" onClick={() => resetToDefaultColumns()}>
+                  ברירת מחדל
+                </Button>
                 <Button
                   size="xs"
                   variant="subtle"
                   disabled={!hasHiddenColumns}
                   onClick={() => showAllColumns()}
                 >
-                  אפס
+                  הצג הכל
                 </Button>
               </div>
             </div>

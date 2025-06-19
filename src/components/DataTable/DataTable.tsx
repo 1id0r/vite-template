@@ -56,7 +56,7 @@ export function DataTable() {
   );
 
   // Table instance and computations (UPDATED)
-  const { table, selectionInfo, allColumns, showAllColumns } = useTable(
+  const { table, selectionInfo, allColumns, showAllColumns, resetToDefaultColumns } = useTable(
     tableData.displayData,
     columns,
     tableState,
@@ -85,13 +85,14 @@ export function DataTable() {
   });
 
   // Layout calculations
+  // Layout calculations - only include visible columns
   const totalWidth = useMemo(
     () =>
       table
         .getHeaderGroups()[0]
         ?.headers.filter((header) => header.column.getIsVisible())
         .reduce((sum, header) => sum + header.getSize(), 0) || 0,
-    [table]
+    [table, tableState.columnVisibility] // Add columnVisibility as dependency
   );
 
   const shouldStretchColumns = containerWidth > totalWidth;
@@ -213,6 +214,7 @@ export function DataTable() {
         pageSize={1000}
         setPageSize={(size) => table.setPageSize(size)}
         table={table}
+        resetToDefaultColumns={resetToDefaultColumns}
         data={tableData.originalData}
         folders={tableData.folderState.folders}
         hasSelectedRows={selectionInfo.selectedRowsCount > 0}
@@ -299,7 +301,6 @@ export function DataTable() {
                         backgroundColor: 'white',
                         borderLeft: 'none',
                         userSelect: 'none',
-                        textAlign: 'center',
                         direction: 'rtl',
                         display: 'flex',
                         alignItems: '',
@@ -443,8 +444,6 @@ export function DataTable() {
                     direction: 'rtl',
                     transform: `translateY(${virtualRow.start}px) ${row.getIsSelected() ? 'scale(0.99)' : 'scale(1)'}`,
                     cursor: !isRowFolder ? 'pointer' : undefined,
-                    paddingTop: '0px',
-                    paddingRight: '0px',
                     // Add margin-top for first unassigned row
                     marginTop: isFirstUnassignedRow ? '3px' : '0px',
                     // No bottom padding for folders when expanded, and no padding for folder items
@@ -465,7 +464,6 @@ export function DataTable() {
                   <div
                     style={{
                       width: '100%',
-                      // Different height calculation based on row type and folder state
                       height:
                         // Expanded folder header - full height to connect seamlessly
                         (isRowFolder &&
@@ -480,7 +478,7 @@ export function DataTable() {
                           : 'calc(100% - 4px)', // Reduced height for normal rows and collapsed folders (creates margin)
                       display: 'flex',
                       direction: 'rtl',
-                      borderRadius: '8px',
+                      borderRadius: '10px',
                       opacity: row.getIsSelected() ? 0.8 : 1,
                     }}
                   >
@@ -492,7 +490,7 @@ export function DataTable() {
                           direction: 'rtl',
                           position: 'relative',
                           backgroundColor: '#FFFFFF80',
-                          borderRadius: '8px',
+                          borderRadius: '10px',
                           border: '1px solid #8E9CC5',
                           marginTop: '2px', // Add margin for folder header
                           display: 'flex',
@@ -595,6 +593,7 @@ export function DataTable() {
                                 minWidth: `${cellWidth}px`,
                                 maxWidth: `${cellWidth}px`,
                                 padding: '12px',
+                                marginLeft: '-3px',
                                 paddingRight:
                                   (row.original as any).isInFolder && isFirstCell ? '30px' : '16px',
                                 backgroundColor: 'inherit',

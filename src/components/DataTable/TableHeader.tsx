@@ -14,6 +14,7 @@ interface TableHeaderProps {
   columnOrder: string[];
   setColumnOrder: (order: string[]) => void;
   showAllColumns: () => void;
+  resetToDefaultColumns: () => void;
   pageSize: number;
   setPageSize: (size: number) => void;
   // Export props
@@ -37,6 +38,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
   columnOrder,
   setColumnOrder,
   showAllColumns,
+  resetToDefaultColumns,
   pageSize,
   setPageSize,
   table,
@@ -180,6 +182,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
             columnOrder={columnOrder}
             setColumnOrder={setColumnOrder}
             showAllColumns={showAllColumns}
+            resetToDefaultColumns={resetToDefaultColumns}
           />
           <FolderActions
             onCreateFolder={onCreateFolder}

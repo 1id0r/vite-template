@@ -23,6 +23,93 @@ import {
 import { generateMockData } from './mockData';
 import { DataItem, FolderItem, FolderState, isFolder, TableRow } from './types';
 
+// Default visible columns
+const DEFAULT_VISIBLE_COLUMNS = [
+  'select',
+  'objectId',
+  'description',
+  'hierarchy',
+  'startTime',
+  'lastUpdated',
+  'severity',
+];
+
+// Storage key for column visibility
+const COLUMN_VISIBILITY_STORAGE_KEY = 'table-column-visibility';
+
+// Helper functions for column visibility persistence
+const saveColumnVisibility = (visibility: VisibilityState) => {
+  try {
+    localStorage.setItem(COLUMN_VISIBILITY_STORAGE_KEY, JSON.stringify(visibility));
+  } catch (error) {
+    console.error('Failed to save column visibility:', error);
+  }
+};
+
+const loadColumnVisibility = (): VisibilityState => {
+  try {
+    const saved = localStorage.getItem(COLUMN_VISIBILITY_STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (error) {
+    console.error('Failed to load column visibility:', error);
+  }
+
+  // Return default visibility state - hide all columns except the default ones
+  const defaultVisibility: VisibilityState = {};
+
+  // Hide all columns that are not in the default list
+  const allPossibleColumns = [
+    'select',
+    'objectId',
+    'description',
+    'hierarchy',
+    'startTime',
+    'lastUpdated',
+    'severity',
+    'impact',
+    'environment',
+    'origin',
+    'snId',
+  ];
+
+  allPossibleColumns.forEach((columnId) => {
+    if (!DEFAULT_VISIBLE_COLUMNS.includes(columnId)) {
+      defaultVisibility[columnId] = false;
+    }
+  });
+
+  return defaultVisibility;
+};
+
+const getDefaultColumnVisibility = (): VisibilityState => {
+  const defaultVisibility: VisibilityState = {};
+
+  // Hide all columns that are not in the default list
+  const allPossibleColumns = [
+    'select',
+    'objectId',
+    'description',
+    'hierarchy',
+    'startTime',
+    'lastUpdated',
+    'severity',
+    'impact',
+    'environment',
+    'origin',
+    'snId',
+  ];
+
+  allPossibleColumns.forEach((columnId) => {
+    if (!DEFAULT_VISIBLE_COLUMNS.includes(columnId)) {
+      defaultVisibility[columnId] = false;
+    }
+  });
+
+  return defaultVisibility;
+};
+
 // Hook for managing table data and folder state
 export const useTableData = () => {
   const [originalData, setOriginalData] = useState<DataItem[]>(() => generateMockData());
@@ -81,10 +168,26 @@ export const useTableState = () => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+
+  // Initialize column visibility with saved state or defaults
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(() =>
+    loadColumnVisibility()
+  );
+
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [columnOrder, setColumnOrder] = useState<string[]>([]);
   const [columnSizing, setColumnSizing] = useState<Record<string, number>>({});
+
+  // Save column visibility to localStorage whenever it changes
+  useEffect(() => {
+    saveColumnVisibility(columnVisibility);
+  }, [columnVisibility]);
+
+  // Function to reset to default column visibility
+  const resetToDefaultColumns = useCallback(() => {
+    const defaultVisibility = getDefaultColumnVisibility();
+    setColumnVisibility(defaultVisibility);
+  }, []);
 
   return {
     sorting,
@@ -101,6 +204,7 @@ export const useTableState = () => {
     setColumnOrder,
     columnSizing,
     setColumnSizing,
+    resetToDefaultColumns,
   };
 };
 
@@ -351,6 +455,7 @@ export const useTable = (
     setColumnOrder,
     columnSizing,
     setColumnSizing,
+    resetToDefaultColumns,
   } = tableState;
 
   // Custom sorting handler that updates both table sorting and our custom sorting
@@ -442,5 +547,6 @@ export const useTable = (
     selectionInfo,
     allColumns,
     showAllColumns,
+    resetToDefaultColumns,
   };
 };
