@@ -2,13 +2,13 @@
 
 import { DataItem, FolderItem, FolderState } from './types';
 
-// Drag and drop data transfer types
+
 export const DRAG_TYPES = {
   ROW: 'application/row-data',
   FOLDER: 'application/folder-data',
 } as const;
 
-// Drag data interface
+
 export interface DragData {
   type: 'row' | 'folder';
   id: string;

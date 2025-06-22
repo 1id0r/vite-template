@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { createColumnHelper } from '@tanstack/react-table';
 import { Checkbox, Text, Tooltip } from '@mantine/core';
-import { EnvironmentBadge, ImpactBadge, SeverityBadge } from './Badges';
+import { ImpactBadge, SeverityBadge } from './Badges';
 import { DataItem, isFolder, TableRow } from './types';
 
 // Format date as d/m and hour:minute
@@ -167,7 +167,12 @@ export const useTableColumns = () => {
         header: 'סביבה',
         cell: (info) => {
           if (isFolder(info.row.original)) return null;
-          return <EnvironmentBadge environment={info.getValue() as DataItem['environment']} />;
+          // Changed from EnvironmentBadge to plain Text
+          return (
+            <Text c="#3E4758" fw={400}>
+              {info.getValue()}
+            </Text>
+          );
         },
         enableColumnFilter: true,
         enableHiding: true,

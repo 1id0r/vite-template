@@ -12,11 +12,9 @@ export const ExportControls: React.FC<ExportControlsProps> = ({ table, data }) =
   const selectedRows = table.getFilteredSelectedRowModel().rows;
   const hasSelectedRows = selectedRows.length > 0;
 
-  // Convert data to CSV format
   const convertToCSV = (items: DataItem[]): string => {
     if (items.length === 0) return '';
 
-    // Define headers in Hebrew
     const headers = [
       'שם יישות',
       'תיאור',

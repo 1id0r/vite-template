@@ -132,7 +132,6 @@ const sortDataItems = (items: DataItem[], sortingState: any[]): DataItem[] => {
   });
 };
 
-// Generate table rows for display with proper sorting (UPDATED)
 export const generateTableRows = (
   folderState: FolderState,
   allData: DataItem[],
@@ -290,15 +289,6 @@ export const moveRowsToFolder = (
     folders: newFolders,
     unassignedRows: newUnassignedRows,
   };
-
-  console.log('=== MOVE RESULT ===');
-  console.log(
-    'Final result folders:',
-    result.folders.map((f) => ({ name: f.name, count: f.rowIds.length }))
-  );
-  console.log('Final unassigned count:', result.unassignedRows.length);
-  console.log('=== END MOVE DEBUG ===');
-
   return result;
 };
 
@@ -318,7 +308,6 @@ export const toggleFolderExpansion = (folderState: FolderState, folderId: string
   };
 };
 
-// Rename folder
 export const renameFolder = (
   folderState: FolderState,
   folderId: string,
@@ -334,7 +323,6 @@ export const renameFolder = (
   };
 };
 
-// Delete folder (move rows back to unassigned)
 export const deleteFolder = (
   folderState: FolderState,
   folderId: string,

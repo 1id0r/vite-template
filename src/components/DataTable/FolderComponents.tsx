@@ -210,13 +210,13 @@ export const FolderRow: React.FC<FolderRowProps> = ({
   const getSeverityColor = (severity: 'critical' | 'major' | 'warning' | 'disabled') => {
     switch (severity) {
       case 'critical':
-        return '#fff3f3'; // Light red color for critical severity border, matching row background
+        return '#fff3f3';
       case 'major':
-        return '#fff8b7'; // Light yellow color for major severity border, matching row background
+        return '#fff8b7';
       case 'warning':
-        return '#b5e1ff'; // Light blue color for warning severity border, matching row background
+        return '#b5e1ff';
       case 'disabled':
-        return '#f0f0f0'; // Light gray color for disabled severity border
+        return '#f0f0f0';
       default:
         return severityColorMap[severity];
     }
@@ -229,8 +229,6 @@ export const FolderRow: React.FC<FolderRowProps> = ({
       style={{
         width: '100%',
         borderRadius: '4px',
-        // padding: isExpanded ? '8px' : '0', // Add padding when border is present
-        // marginBottom: isExpanded ? '8px' : '0', // Add margin below when expanded
       }}
     >
       <ActionIcon variant="subtle" size="sm" onClick={() => onToggleExpansion(folder.id)}>
@@ -356,13 +354,35 @@ interface FolderActionsProps {
   onCreateFolder: () => void;
   onAddToFolder: () => void;
   hasSelectedRows: boolean;
+  folderCount: number; // Add this prop to track folder count
 }
-// Update FolderComponents.tsx - FolderActions component
+
 export const FolderActions: React.FC<FolderActionsProps> = ({
   onCreateFolder,
   onAddToFolder,
   hasSelectedRows,
+  folderCount, // New prop
 }) => {
+  // If no folders exist, directly create folder instead of showing menu
+  if (folderCount === 0) {
+    return (
+      <Button
+        onClick={onCreateFolder}
+        variant="outline"
+        size="xs"
+        color="#1f3a8a"
+        style={{
+          borderRadius: '8px',
+          backgroundColor: '#f9fafc',
+          padding: '8px',
+        }}
+      >
+        <MdCreateNewFolder size={18} />
+      </Button>
+    );
+  }
+
+  // Original menu behavior when folders exist
   return (
     <Menu shadow="md" width={200}>
       <Menu.Target>
@@ -384,7 +404,7 @@ export const FolderActions: React.FC<FolderActionsProps> = ({
         <Menu.Item
           style={{ direction: 'rtl', textAlign: 'right' }}
           leftSection={<MdAdd size={16} />}
-          onClick={onCreateFolder} // This now creates folder directly, no modal
+          onClick={onCreateFolder}
         >
           צור תיקייה חדשה
         </Menu.Item>

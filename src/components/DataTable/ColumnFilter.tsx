@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { MdFilterList } from 'react-icons/md';
 import { ActionIcon, Popover, Select, Stack, Text, TextInput } from '@mantine/core';
-import { DataItem, isFolder } from './types';
+import { DataItem, environmentOptions, isFolder } from './types';
 
 export const ColumnFilter = ({ column, table }: { column: any; table: any }) => {
   const firstDataRow = table
@@ -29,12 +29,11 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
       ).sort();
     }
 
-    if (
-      column.id === 'status' ||
-      column.id === 'impact' ||
-      column.id === 'environment' ||
-      column.id === 'severity'
-    ) {
+    if (column.id === 'environment') {
+      return environmentOptions.slice();
+    }
+
+    if (column.id === 'status' || column.id === 'impact' || column.id === 'severity') {
       return Array.from(
         new Set(
           dataRows
@@ -78,9 +77,11 @@ export const ColumnFilter = ({ column, table }: { column: any; table: any }) => 
                     value: value?.toString() || '',
                     label: Array.isArray(firstValue)
                       ? value
-                      : value
-                        ? value.charAt(0).toUpperCase() + value.slice(1)
-                        : '',
+                      : column.id === 'environment'
+                        ? value
+                        : value
+                          ? value.charAt(0).toUpperCase() + value.slice(1)
+                          : '',
                   })),
               ]}
               searchable

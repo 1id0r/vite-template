@@ -4,10 +4,10 @@ import { DataItem } from './types';
 export const generateMockData = (): DataItem[] => {
   const statuses = ['active', 'inactive', 'pending', 'resolved'] as const;
   const impacts = ['high', 'medium', 'low'] as const;
-  const environments = ['production', 'staging', 'development'] as const;
+  const environments = ['סניפים', 'ציפור', '24/7'] as const; 
   const severities = ['warning', 'major', 'critical', 'disabled'] as const;
 
-  // Hebrew descriptions for testing sorting
+
   const hebrewDescriptions = [
     'אבחון מערכת נתונים',
     'בעיה בחיבור למסד הנתונים',
@@ -108,7 +108,7 @@ export const generateMockData = (): DataItem[] => {
         .split('T')[0],
       status: statuses[Math.floor(Math.random() * statuses.length)],
       impact: impacts[Math.floor(Math.random() * impacts.length)],
-      environment: environments[Math.floor(Math.random() * environments.length)],
+      environment: environments[Math.floor(Math.random() * environments.length)], 
       origin: `System-${String.fromCharCode(65 + Math.floor(Math.random() * 26))}`,
       snId: `SN-${Math.floor(100000 + Math.random() * 900000)}`,
       identities: Array.from(

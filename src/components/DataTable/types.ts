@@ -10,7 +10,7 @@ export type DataItem = {
   startTime: string;
   status: 'active' | 'inactive' | 'pending' | 'resolved'; // Re-added status field
   impact: 'high' | 'medium' | 'low';
-  environment: 'production' | 'staging' | 'development';
+  environment: 'סניפים' | 'ציפור' | '24/7'; // Updated to Hebrew options
   origin: string;
   snId: string;
   identities: string[];
@@ -68,11 +68,8 @@ export const impactColorMap = {
   low: 'blue',
 };
 
-export const environmentColorMap = {
-  production: 'purple',
-  staging: 'cyan',
-  development: 'indigo',
-};
+// Updated environment options - no longer using color map since no badges
+export const environmentOptions = ['סניפים', 'ציפור', '24/7'] as const;
 
 export const severityColorMap = {
   warning: 'blue',
@@ -95,19 +92,19 @@ export const getRowStyleBySeverity = (severity: DataItem['severity']) => {
     };
   } else if (severity === 'warning') {
     return {
-      backgroundColor: '#F0F9FF', // Light blue for warning severity
-      border: '1px solid #CDD9FF', // Dark blue border for warning severity
+      backgroundColor: '#F0F9FF', 
+      border: '1px solid #CDD9FF', 
     };
   } else if (severity === 'disabled') {
     return {
-      backgroundColor: '#fafaff', // Light gray for disabled severity
-      border: '0.5px solid #495057', // Black border for disabled severity
-      opacity: 0.5, // Make disabled items slightly transparent
+      backgroundColor: '#fafaff', 
+      border: '0.5px solid #495057', 
+      opacity: 0.5, 
     };
   } else {
     return {
       backgroundColor: 'white',
-      border: '1px solid #e0e0e0', // Light gray border for default
+      border: '1px solid #e0e0e0', 
     };
   }
 };

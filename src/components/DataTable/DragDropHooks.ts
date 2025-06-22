@@ -7,16 +7,14 @@ import {
   createDragData,
   DRAG_CLASSES,
   DRAG_TYPES,
-  DragData,
-  findDropTarget,
-  getDropZoneInfo,
+
   injectDragDropStyles,
   parseDragData,
   serializeDragData,
 } from './DragDropUtils';
-import { DataItem, FolderState, isDataItem } from './types';
+import { DataItem, FolderState } from './types';
 
-// Create drag props without using hooks
+
 export const createDragProps = (
   rowData: DataItem,
   isInFolder: boolean = false
@@ -45,7 +43,7 @@ export const createDragProps = (
   };
 };
 
-// Hook for making folders drop targets
+
 export const useDropTarget = (
   folderId: string,
   folderState: FolderState,
@@ -79,7 +77,7 @@ export const useDropTarget = (
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
-    // Only set isOver to false if we're leaving the drop target entirely
+
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const x = e.clientX;
     const y = e.clientY;
@@ -106,7 +104,7 @@ export const useDropTarget = (
     [folderId, folderState, onDropRow]
   );
 
-  // Update element classes based on state
+
   useEffect(() => {
     const element = dropRef.current;
     if (!element) return;

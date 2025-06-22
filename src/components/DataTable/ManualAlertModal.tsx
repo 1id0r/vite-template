@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Group, Modal, Select, Stack, Text, Textarea, TextInput } from '@mantine/core';
-import { DataItem } from './types';
+import { DataItem, environmentOptions } from './types';
 
-// Manual Alert Modal Component
 interface ManualAlertModalProps {
   opened: boolean;
   onClose: () => void;
@@ -15,6 +14,7 @@ export const ManualAlertModal: React.FC<ManualAlertModalProps> = ({ opened, onCl
     entityName: '',
     startDate: '',
     description: '',
+    environment: '',
   });
 
   const [errors, setErrors] = useState<Record<string, boolean>>({});
@@ -26,6 +26,7 @@ export const ManualAlertModal: React.FC<ManualAlertModalProps> = ({ opened, onCl
     if (!formData.entityName) newErrors.entityName = true;
     if (!formData.startDate) newErrors.startDate = true;
     if (!formData.description) newErrors.description = true;
+    if (!formData.environment) newErrors.environment = true; // Added environment validation
 
     setErrors(newErrors);
 
@@ -37,15 +38,15 @@ export const ManualAlertModal: React.FC<ManualAlertModalProps> = ({ opened, onCl
         description: formData.description,
         startTime: formData.startDate,
         severity: formData.severity as DataItem['severity'],
-        // Minimal required fields for table functionality
-        lastUpdated: formData.startDate, // Use the same date as start time
-        hierarchy: '', // Empty - user didn't provide
-        status: 'active', // Default status
-        impact: 'medium', // Default impact
-        environment: 'production', // Default environment
-        origin: 'Manual', // Indicate it's manually created
-        snId: '', // Empty - user didn't provide
-        identities: [], // Empty - user didn't provide
+        environment: formData.environment as DataItem['environment'], // Use selected environment
+
+        lastUpdated: formData.startDate,
+        hierarchy: '',
+        status: 'active',
+        impact: 'medium',
+        origin: 'Manual',
+        snId: '',
+        identities: [],
       };
 
       onSave(newAlert);
@@ -56,6 +57,7 @@ export const ManualAlertModal: React.FC<ManualAlertModalProps> = ({ opened, onCl
         entityName: '',
         startDate: '',
         description: '',
+        environment: '',
       });
       setErrors({});
       onClose();
@@ -68,6 +70,7 @@ export const ManualAlertModal: React.FC<ManualAlertModalProps> = ({ opened, onCl
       entityName: '',
       startDate: '',
       description: '',
+      environment: '',
     });
     setErrors({});
     onClose();
@@ -162,29 +165,65 @@ export const ManualAlertModal: React.FC<ManualAlertModalProps> = ({ opened, onCl
           </div>
         </Group>
 
-        <div>
-          <Text size="sm" fw={500} mb={5}>
-            זמן התחלה{' '}
-            <Text component="span" c="red">
-              *
+        <Group grow>
+          <div>
+            <Text size="sm" fw={500} mb={5}>
+              זמן התחלה{' '}
+              <Text component="span" c="red">
+                *
+              </Text>
             </Text>
-          </Text>
-          <TextInput
-            placeholder="DD/MM/YY או DD/MM/YYYY"
-            value={formData.startDate}
-            onChange={(e) => {
-              setFormData((prev) => ({ ...prev, startDate: e.target.value }));
-              if (errors.startDate) setErrors((prev) => ({ ...prev, startDate: false }));
-            }}
-            error={errors.startDate}
-            styles={{
-              input: {
-                textAlign: 'right',
-                direction: 'rtl',
-              },
-            }}
-          />
-        </div>
+            <TextInput
+              placeholder="DD/MM/YY או DD/MM/YYYY"
+              value={formData.startDate}
+              onChange={(e) => {
+                setFormData((prev) => ({ ...prev, startDate: e.target.value }));
+                if (errors.startDate) setErrors((prev) => ({ ...prev, startDate: false }));
+              }}
+              error={errors.startDate}
+              styles={{
+                input: {
+                  textAlign: 'right',
+                  direction: 'rtl',
+                },
+              }}
+            />
+          </div>
+
+          <div>
+            <Text size="sm" fw={500} mb={5}>
+              סביבה{' '}
+              <Text component="span" c="red">
+                *
+              </Text>
+            </Text>
+            <Select
+              placeholder="בחר סביבה"
+              value={formData.environment}
+              onChange={(value) => {
+                setFormData((prev) => ({ ...prev, environment: value || '' }));
+                if (errors.environment) setErrors((prev) => ({ ...prev, environment: false }));
+              }}
+              data={environmentOptions.map((env) => ({
+                value: env,
+                label: env,
+              }))}
+              error={errors.environment}
+              styles={{
+                input: {
+                  borderColor: errors.environment ? '#fa5252' : undefined,
+                  textAlign: 'right',
+                  direction: 'rtl',
+                },
+              }}
+            />
+            {errors.environment && (
+              <Text size="xs" c="red" mt={2}>
+                ⚠ Error
+              </Text>
+            )}
+          </div>
+        </Group>
 
         <div>
           <Text size="sm" fw={500} mb={5}>

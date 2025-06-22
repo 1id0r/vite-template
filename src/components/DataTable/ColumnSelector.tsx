@@ -13,7 +13,6 @@ interface ColumnSelectorProps {
   resetToDefaultColumns: () => void;
 }
 
-// Updated to include startTime, description, and objectId as pinned
 const pinnedColumnIds = ['select', 'newBadge', 'objectId', 'description', 'startTime'];
 
 export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
@@ -98,7 +97,6 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   };
 
   const toggleColumnVisibility = (columnId: string) => {
-    // Prevent hiding pinned columns
     if (pinnedColumnIds.includes(columnId)) return;
     const newState = { ...columnVisibility };
 

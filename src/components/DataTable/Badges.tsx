@@ -1,13 +1,7 @@
 import React from 'react';
 import { MdBlock, MdCancel, MdInfo, MdWarning } from 'react-icons/md';
 import { Badge } from '@mantine/core';
-import {
-  DataItem,
-  environmentColorMap,
-  impactColorMap,
-  severityColorMap,
-  statusColorMap,
-} from './types';
+import { DataItem, impactColorMap, severityColorMap, statusColorMap } from './types';
 
 export const StatusBadge = ({ status }: { status: DataItem['status'] }) => {
   return (
@@ -21,14 +15,6 @@ export const ImpactBadge = ({ impact }: { impact: DataItem['impact'] }) => {
   return (
     <Badge color={impactColorMap[impact]} variant="filled" radius="md" size="sm">
       {impact.charAt(0).toUpperCase() + impact.slice(1)}
-    </Badge>
-  );
-};
-
-export const EnvironmentBadge = ({ environment }: { environment: DataItem['environment'] }) => {
-  return (
-    <Badge color={environmentColorMap[environment]} variant="filled" radius="md" size="sm">
-      {environment.charAt(0).toUpperCase() + environment.slice(1)}
     </Badge>
   );
 };
@@ -79,7 +65,7 @@ export const SeverityBadge = ({ severity }: { severity: DataItem['severity'] }) 
         gap: '2px',
         padding: '0 8px',
         height: '20px',
-        opacity: severity === 'disabled' ? 0.7 : 1, // Make disabled badges slightly transparent
+        opacity: severity === 'disabled' ? 0.7 : 1,
       }}
     >
       {getIcon(severity)}

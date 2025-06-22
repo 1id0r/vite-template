@@ -187,6 +187,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
           <FolderActions
             onCreateFolder={onCreateFolder}
             onAddToFolder={onAddToFolder}
+            folderCount={folders.length} // Add this prop
             hasSelectedRows={hasSelectedRows}
           />
           {/* Export Menu */}

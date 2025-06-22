@@ -4,13 +4,12 @@ import {
   MdBlock,
   MdCancel,
   MdDelete,
-  MdFolder,
   MdInfo,
   MdKeyboardArrowDown,
   MdKeyboardArrowRight,
   MdWarning,
 } from 'react-icons/md';
-import { ActionIcon, Badge, Group, Stack, Text, TextInput } from '@mantine/core';
+import { ActionIcon, Badge, Group, Text, TextInput } from '@mantine/core';
 import { useDropTarget } from './DragDropHooks';
 import { FolderItem, FolderState, severityColorMap } from './types';
 
@@ -45,10 +44,8 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
   const [editName, setEditName] = useState(folder.name);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Drop target functionality
   const { dropRef, isOver, canDrop, dropProps } = useDropTarget(folder.id, folderState, onDropRow);
 
-  // Auto-focus when editing starts
   useEffect(() => {
     if ((isEditing || !folder.name) && inputRef.current) {
       inputRef.current.focus();
@@ -56,7 +53,6 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
     }
   }, [isEditing, folder.name]);
 
-  // Update local state when folder name changes
   useEffect(() => {
     setEditName(folder.name);
   }, [folder.name]);

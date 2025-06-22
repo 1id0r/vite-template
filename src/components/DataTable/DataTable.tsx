@@ -84,7 +84,6 @@ export function DataTable() {
         : undefined,
   });
 
-  // Layout calculations
   // Layout calculations - only include visible columns
   const totalWidth = useMemo(
     () =>
@@ -97,17 +96,6 @@ export function DataTable() {
 
   const shouldStretchColumns = containerWidth > totalWidth;
   const stretchRatio = shouldStretchColumns ? containerWidth / totalWidth : 1;
-
-  // Event handlers
-  const handleAddToFolder = useCallback(
-    (folderId: string) => {
-      if (selectionInfo.selectedRowIds.length > 0) {
-        folderOperations.handleMoveRowsToFolder(selectionInfo.selectedRowIds, folderId);
-        tableState.setRowSelection({});
-      }
-    },
-    [selectionInfo.selectedRowIds, folderOperations, tableState]
-  );
 
   const handleRowClick = (row: TableRow) => {
     if (!isFolder(row)) {
@@ -176,7 +164,6 @@ export function DataTable() {
     [tableData, tableState, contextMenu]
   );
 
-  // Effects
   useEffect(() => {
     if (!contextMenu.contextMenuPosition) return;
 
@@ -218,7 +205,7 @@ export function DataTable() {
         data={tableData.originalData}
         folders={tableData.folderState.folders}
         hasSelectedRows={selectionInfo.selectedRowsCount > 0}
-        onCreateFolder={() => folderOperations.handleCreateFolder()} // Direct creation, no modal
+        onCreateFolder={() => folderOperations.handleCreateFolder()}
         onAddToFolder={() => modalStates.setAddToFolderModalOpen(true)}
         onAddManualAlert={() => modalStates.setManualAlertModalOpen(true)}
       />
@@ -270,7 +257,6 @@ export function DataTable() {
               zIndex: 10,
               width: '100%',
               minWidth: `${totalWidth}px`,
-              // borderBottom: '1px solid #e9ecef',
             }}
           >
             {table.getHeaderGroups().map((headerGroup) => (
@@ -299,11 +285,8 @@ export function DataTable() {
                         fontWeight: 500,
                         color: '#9198A7',
                         backgroundColor: 'white',
-                        borderLeft: 'none',
-                        userSelect: 'none',
                         direction: 'rtl',
                         display: 'flex',
-                        alignItems: '',
                         justifyContent: 'space-between',
                       }}
                       onMouseEnter={(e) => {
@@ -407,10 +390,6 @@ export function DataTable() {
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {
               const row = tableRows[virtualRow.index];
               const isRowFolder = isFolder(row.original);
-              const rowStyle = isRowFolder
-                ? getFolderRowStyle()
-                : getRowStyleBySeverity((row.original as DataItem).severity);
-
               const isFirstUnassignedRow =
                 !isRowFolder &&
                 !(row.original as DataItem).isInFolder &&
@@ -444,9 +423,9 @@ export function DataTable() {
                     direction: 'rtl',
                     transform: `translateY(${virtualRow.start}px) ${row.getIsSelected() ? 'scale(0.99)' : 'scale(1)'}`,
                     cursor: !isRowFolder ? 'pointer' : undefined,
-                    // Add margin-top for first unassigned row
+
                     marginTop: isFirstUnassignedRow ? '3px' : '0px',
-                    // No bottom padding for folders when expanded, and no padding for folder items
+
                     paddingBottom:
                       (isRowFolder &&
                         isFolder(row.original) &&
@@ -455,8 +434,8 @@ export function DataTable() {
                         row.original.isInFolder &&
                         row.original.folderId &&
                         tableData.folderState.expandedFolders.has(row.original.folderId))
-                        ? '0px' // No margin for expanded folders and their items
-                        : '3px', // Keep margin for normal standalone rows and collapsed folders
+                        ? '0px'
+                        : '3px',
                   }}
                   onClick={() => handleRowClick(row.original)}
                   onContextMenu={(e) => !isRowFolder && handleContextMenu(e, row.original.id)}
@@ -474,8 +453,8 @@ export function DataTable() {
                           row.original.isInFolder &&
                           row.original.folderId &&
                           tableData.folderState.expandedFolders.has(row.original.folderId))
-                          ? 'calc(100%)' // Full height for expanded folders and their items (no margin)
-                          : 'calc(100% - 4px)', // Reduced height for normal rows and collapsed folders (creates margin)
+                          ? 'calc(100%)'
+                          : 'calc(100% - 4px)', // Reduced height for normal rows
                       display: 'flex',
                       direction: 'rtl',
                       borderRadius: '10px',
@@ -492,19 +471,18 @@ export function DataTable() {
                           backgroundColor: '#FFFFFF80',
                           borderRadius: '10px',
                           border: '1px solid #8E9CC5',
-                          marginTop: '2px', // Add margin for folder header
+                          marginTop: '2px',
                           display: 'flex',
-                          alignItems: 'center', // Center the folder content vertically
-                          minHeight: '56px', // Match the row height
-                          // Folder border styling
+                          alignItems: 'center',
+                          minHeight: '56px',
+
                           ...(isFolder(row.original) &&
                           tableData.folderState.expandedFolders.has(row.original.id)
                             ? {
-                                // Expanded folder: remove bottom border and radius
                                 borderBottom: 'none',
                                 borderBottomLeftRadius: '0',
                                 borderBottomRightRadius: '0',
-                                marginBottom: '0', // Remove any margin below folder
+                                marginBottom: '0',
                               }
                             : {
                                 border: '1px solid #8E9CC5',
@@ -524,7 +502,6 @@ export function DataTable() {
                           onRename={folderOperations.handleRenameFolder}
                           onDelete={folderOperations.handleDeleteFolder}
                           onDropRow={folderOperations.handleMoveRowToFolder}
-                          // Add new props for inline editing
                           isEditing={
                             folderOperations.editingFolderId === (row.original as FolderItem).id
                           }
@@ -550,15 +527,14 @@ export function DataTable() {
                                 : 1,
                           cursor: 'grab',
                           borderRadius: '6px',
-                          // Folder item borders - connect to folder
+
                           ...(isDataItem(row.original) &&
                           row.original.isInFolder &&
                           row.original.folderId &&
                           tableData.folderState.expandedFolders.has(row.original.folderId)
                             ? {
-                                // Items in expanded folders
                                 border: '1px solid #8E9CC5',
-                                borderTop: 'none', // Connect to folder above
+                                borderTop: 'none',
                                 borderTopLeftRadius: '0',
                                 borderTopRightRadius: '0',
                                 borderBottomLeftRadius: row.original.isLastInFolderGroup
@@ -571,7 +547,6 @@ export function DataTable() {
                                   ? '1px solid ##8E9CC5'
                                   : 'none',
                                 margin: '0', // Remove any margins
-                                // Remove separator between folder items to eliminate gaps
                               }
                             : {}),
                         }}
@@ -639,14 +614,11 @@ export function DataTable() {
         )}
       </Group>
 
-      {/* Modals */}
       <ManualAlertModal
         opened={modalStates.manualAlertModalOpen}
         onClose={() => modalStates.setManualAlertModalOpen(false)}
         onSave={tableData.handleAddManualAlert}
       />
-
-      {/* Remove CreateFolderModal since we're doing inline creation */}
 
       <AddToFolderModal
         opened={modalStates.addToFolderModalOpen}

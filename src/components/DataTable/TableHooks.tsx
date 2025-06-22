@@ -291,13 +291,11 @@ export const useFolderOperations = (
   const handleSaveFolderName = useCallback(
     (folderId: string, newName: string) => {
       if (!newName.trim()) {
-        // Delete folder if no name provided
+        // Delete folder if no name provided - NO ALERT HERE
         setFolderState((prev) => ({
           ...prev,
           folders: prev.folders.filter((f) => f.id !== folderId),
         }));
-
-        alert('שם התיקייה נדרש. התיקייה נמחקה.');
 
         setEditingFolderId(null);
         setTableVersion((v) => v + 1);
@@ -323,11 +321,14 @@ export const useFolderOperations = (
       const folder = folderState.folders.find((f) => f.id === folderId);
 
       if (folder && !folder.name.trim()) {
-        // Delete folder if it has no name
+        // Delete folder if it has no name and show alert only here
         setFolderState((prev) => ({
           ...prev,
           folders: prev.folders.filter((f) => f.id !== folderId),
         }));
+
+        // Show alert only when cancelling, not when saving
+        alert('שם התיקייה נדרש. התיקייה נמחקה.');
         setTableVersion((v) => v + 1);
       }
 
