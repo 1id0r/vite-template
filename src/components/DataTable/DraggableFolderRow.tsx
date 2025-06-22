@@ -142,8 +142,8 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
           }),
         ...(isOver &&
           !canDrop && {
-            backgroundColor: 'rgba(250, 82, 82, 0.1)',
-            border: '2px dashed #228be6',
+            backgroundColor: '#1f3a8a',
+            border: '2px dashed #fff',
           }),
       }}
     >
@@ -185,7 +185,6 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
         <ActionIcon variant="subtle" size="md" onClick={handleStartEditing} color="blue">
           <FiEdit color="#8E9CC5" size={18} />
         </ActionIcon>
-        {/* <MdFolder size={18} color="black" /> */}
 
         {isEditing || !folder.name ? (
           <TextInput

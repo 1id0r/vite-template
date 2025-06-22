@@ -63,9 +63,9 @@ export const SeverityBadge = ({ severity }: { severity: DataItem['severity'] }) 
         display: 'inline-flex',
         alignItems: 'center',
         gap: '2px',
-        padding: '0 8px',
+        fontWeight: '500',
+        padding: '0 4px',
         height: '20px',
-        opacity: severity === 'disabled' ? 0.7 : 1,
       }}
     >
       {getIcon(severity)}
