@@ -75,7 +75,7 @@ export const severityColorMap = {
   warning: 'blue',
   major: 'yellow',
   critical: 'red',
-  disabled: 'gray', // Added disabled color
+  disabled: '#4D556D', // Added disabled color
 };
 
 // Row style based on severity - FIXED: Removed redundant borders
@@ -97,9 +97,8 @@ export const getRowStyleBySeverity = (severity: DataItem['severity']) => {
     };
   } else if (severity === 'disabled') {
     return {
-      backgroundColor: '#fafaff', 
-      border: '0.5px solid #495057', 
-      opacity: 0.5, 
+      backgroundColor: '#E7E7E7', 
+      border: '1px solid #C7C7C7'
     };
   } else {
     return {

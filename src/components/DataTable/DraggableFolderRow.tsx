@@ -182,9 +182,6 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
         >
           {isExpanded ? <MdKeyboardArrowDown size={18} /> : <MdKeyboardArrowRight size={18} />}
         </ActionIcon>
-        <ActionIcon variant="subtle" size="md" onClick={handleStartEditing} color="blue">
-          <FiEdit color="#8E9CC5" size={18} />
-        </ActionIcon>
 
         {isEditing || !folder.name ? (
           <TextInput
@@ -320,7 +317,9 @@ export const DraggableFolderRow: React.FC<DraggableFolderRowProps> = ({
                 </Badge>
               )}
             </Group>
-
+            <ActionIcon variant="subtle" size="md" onClick={handleStartEditing} color="blue">
+              <FiEdit color="#8E9CC5" size={18} />
+            </ActionIcon>
             <ActionIcon
               variant="subtle"
               size="sm"

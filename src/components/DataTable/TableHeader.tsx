@@ -182,6 +182,7 @@ export const TableHeader: React.FC<TableHeaderProps> = ({
             columnOrder={columnOrder}
             setColumnOrder={setColumnOrder}
             showAllColumns={showAllColumns}
+            כן
             resetToDefaultColumns={resetToDefaultColumns}
           />
           <FolderActions

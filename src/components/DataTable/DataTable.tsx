@@ -93,9 +93,9 @@ export function DataTable() {
         .reduce((sum, header) => sum + header.getSize(), 0) || 0,
     [table, tableState.columnVisibility] // Add columnVisibility as dependency
   );
-
-  const shouldStretchColumns = containerWidth > totalWidth;
-  const stretchRatio = shouldStretchColumns ? containerWidth / totalWidth : 1;
+  const adjustedContainerWidth = Math.max(0, containerWidth - 32); // Account for padding
+  const shouldStretchColumns = adjustedContainerWidth > totalWidth;
+  const stretchRatio = shouldStretchColumns ? adjustedContainerWidth / totalWidth : 1;
 
   const handleRowClick = (row: TableRow) => {
     if (!isFolder(row)) {
@@ -246,6 +246,8 @@ export function DataTable() {
             direction: 'rtl',
             contain: 'strict',
             willChange: 'scroll-position',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
           }}
         >
           {/* Table Header */}
@@ -256,7 +258,9 @@ export function DataTable() {
               backgroundColor: 'white',
               zIndex: 10,
               width: '100%',
-              minWidth: `${totalWidth}px`,
+              minWidth: `${Math.min(totalWidth, adjustedContainerWidth)}px`, // Prevent overflow
+              maxWidth: '100%', // Add this
+              boxSizing: 'border-box', // Add this
             }}
           >
             {table.getHeaderGroups().map((headerGroup) => (
@@ -318,7 +322,6 @@ export function DataTable() {
                         )}
                       </div>
 
-                      {/* Column Resizer with width limits */}
                       {header.column.getCanResize() && (
                         <div
                           onMouseDown={(e) => {
@@ -383,8 +386,10 @@ export function DataTable() {
             style={{
               height: `${rowVirtualizer.getTotalSize()}px`,
               width: '100%',
-              minWidth: `${totalWidth}px`,
+              minWidth: `${Math.min(totalWidth, adjustedContainerWidth)}px`, // Prevent overflow
+              maxWidth: '100%', // Add this
               position: 'relative',
+              boxSizing: 'border-box', // Add this
             }}
           >
             {rowVirtualizer.getVirtualItems().map((virtualRow) => {

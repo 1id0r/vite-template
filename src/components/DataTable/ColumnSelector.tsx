@@ -13,7 +13,11 @@ interface ColumnSelectorProps {
   resetToDefaultColumns: () => void;
 }
 
-const pinnedColumnIds = ['select', 'newBadge', 'objectId', 'description', 'startTime'];
+// Columns that cannot be hidden but can be moved
+const nonHidableColumnIds = ['select', 'objectId', 'description', 'startTime'];
+
+// Columns that are pinned and cannot be moved
+const pinnedColumnIds = ['select'];
 
 export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   allColumns,
@@ -26,14 +30,25 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
 }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [opened, setOpened] = useState(false);
-  const hasHiddenColumns = allColumns.some((column) => !column.getIsVisible());
 
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [dragOverItem, setDragOverItem] = useState<string | null>(null);
 
-  const pinnedColumns = allColumns.filter((col) => pinnedColumnIds.includes(col.id));
+  // Calculate currently visible columns count (excluding select column entirely)
+  const currentlyVisibleCount = allColumns.filter((col) => {
+    // Skip pinned columns (select) from the count calculation entirely
+    if (pinnedColumnIds.includes(col.id)) return false;
 
-  const reorderableColumns = allColumns
+    // Column is visible if it's NOT in columnVisibility object OR if it's explicitly set to true
+    // (columnVisibility only stores hidden columns as false)
+    return !(col.id in columnVisibility && columnVisibility[col.id] === false);
+  }).length;
+
+  const maxColumns = 8;
+  const canAddMore = currentlyVisibleCount < maxColumns;
+
+  // Get only draggable columns (exclude select from dropdown entirely)
+  const draggableColumns = allColumns
     .filter((col) => !pinnedColumnIds.includes(col.id))
     .sort((a, b) => {
       const aIdx = columnOrder.indexOf(a.id);
@@ -42,6 +57,12 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
     });
 
   const handleDragStart = (e: React.DragEvent, columnId: string) => {
+    // Prevent dragging pinned columns
+    if (pinnedColumnIds.includes(columnId)) {
+      e.preventDefault();
+      return;
+    }
+
     setDraggedItem(columnId);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/html', columnId);
@@ -79,17 +100,17 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
       return;
     }
 
-    const reorderableIds = reorderableColumns.map((col) => col.id);
-
-    const draggedIndex = reorderableIds.indexOf(draggedItem);
-    const targetIndex = reorderableIds.indexOf(targetColumnId);
+    const draggableColumnIds = draggableColumns.map((col) => col.id);
+    const draggedIndex = draggableColumnIds.indexOf(draggedItem);
+    const targetIndex = draggableColumnIds.indexOf(targetColumnId);
 
     if (draggedIndex === -1 || targetIndex === -1) return;
 
-    const newOrder = [...reorderableIds];
+    const newOrder = [...draggableColumnIds];
     const [removed] = newOrder.splice(draggedIndex, 1);
     newOrder.splice(targetIndex, 0, removed);
 
+    // Combine pinned columns with reordered draggable columns
     setColumnOrder([...pinnedColumnIds, ...newOrder]);
 
     setDraggedItem(null);
@@ -97,13 +118,21 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
   };
 
   const toggleColumnVisibility = (columnId: string) => {
-    if (pinnedColumnIds.includes(columnId)) return;
+    // Prevent hiding non-hidable columns
+    if (nonHidableColumnIds.includes(columnId)) return;
+
     const newState = { ...columnVisibility };
+    const isCurrentlyVisible = !(columnId in newState);
+
+    // If trying to show a column, check if we're at the limit
+    if (!isCurrentlyVisible && !canAddMore) {
+      return; // Don't allow showing more columns if at limit
+    }
 
     if (columnId in newState) {
-      delete newState[columnId];
+      delete newState[columnId]; // Show the column
     } else {
-      newState[columnId] = false;
+      newState[columnId] = false; // Hide the column
     }
 
     setColumnVisibility(newState);
@@ -162,15 +191,10 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                 <Button size="xs" variant="subtle" onClick={() => resetToDefaultColumns()}>
                   ברירת מחדל
                 </Button>
-                <Button
-                  size="xs"
-                  variant="subtle"
-                  disabled={!hasHiddenColumns}
-                  onClick={() => showAllColumns()}
-                >
-                  הצג הכל
-                </Button>
               </div>
+              <Text size="xs" c="dimmed">
+                {currentlyVisibleCount}/{maxColumns} עמודות
+              </Text>
             </div>
           </div>
 
@@ -181,32 +205,10 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
               direction: 'rtl',
             }}
           >
-            {pinnedColumns.map((column) => {
-              const header =
-                typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id;
-              return (
-                <div
-                  key={column.id}
-                  style={{
-                    padding: '12px 16px',
-                    fontWeight: 600,
-                    opacity: 0.7,
-                    borderBottom: '1px solid #f0f0f0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <span>{header}</span>
-                  <Text size="xs" c="dimmed">
-                    קבוע
-                  </Text>
-                </div>
-              );
-            })}
-
-            {reorderableColumns.map((column, index) => {
+            {/* Draggable Columns Section */}
+            {draggableColumns.map((column, index) => {
               const isVisible = !(column.id in columnVisibility);
+              const isNonHidable = nonHidableColumnIds.includes(column.id);
               const header =
                 typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id;
 
@@ -216,7 +218,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
               return (
                 <div
                   key={column.id}
-                  draggable
+                  draggable={!pinnedColumnIds.includes(column.id)} // Only make non-pinned columns draggable
                   onDragStart={(e) => handleDragStart(e, column.id)}
                   onDragEnd={handleDragEnd}
                   onDragOver={(e) => handleDragOver(e, column.id)}
@@ -240,12 +242,20 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      cursor: 'pointer',
+                      cursor: isNonHidable ? 'default' : 'pointer',
                       flex: 1,
                     }}
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleColumnVisibility(column.id);
+                      if (!isNonHidable) {
+                        // For hidable columns, check if we can toggle
+                        const isCurrentlyVisible = isVisible;
+                        if (!isCurrentlyVisible && !canAddMore) {
+                          // Show tooltip or visual feedback that limit is reached
+                          return;
+                        }
+                        toggleColumnVisibility(column.id);
+                      }
                     }}
                   >
                     <div
@@ -264,6 +274,7 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                     >
                       <RxDragHandleHorizontal size={18} color="#1f3a8a" />
                     </div>
+
                     <input
                       type="checkbox"
                       checked={isVisible}
@@ -273,8 +284,15 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
                         accentColor: '#1f3a8a',
                         width: '14px',
                         height: '14px',
+                        opacity: isNonHidable ? 0.5 : !isVisible && !canAddMore ? 0.3 : 1,
+                        cursor: isNonHidable
+                          ? 'not-allowed'
+                          : !isVisible && !canAddMore
+                            ? 'not-allowed'
+                            : 'pointer',
                       }}
                     />
+
                     <span>{header}</span>
                   </div>
                 </div>

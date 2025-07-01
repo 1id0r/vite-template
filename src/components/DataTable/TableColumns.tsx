@@ -38,9 +38,10 @@ export const useTableColumns = () => {
         enableSorting: false,
         enableColumnFilter: false,
         enableHiding: false,
+        enableResizing: false, // Disable resizing for select column
         size: 50,
         minSize: 50,
-        maxSize: 50, // Fixed width for checkbox
+        maxSize: 50,
       },
       columnHelper.accessor((row) => (isFolder(row) ? '' : row.objectId), {
         id: 'objectId',
@@ -56,7 +57,7 @@ export const useTableColumns = () => {
         enableColumnFilter: false,
         enableHiding: false,
         enableSorting: true,
-        // Remove custom sortingFn - we handle sorting manually
+        enableResizing: false, // Disable resizing for objectId column
         size: 150,
         minSize: 50,
         maxSize: 300,
@@ -85,10 +86,10 @@ export const useTableColumns = () => {
         enableColumnFilter: false,
         enableHiding: false,
         enableSorting: true,
-        // Remove custom sortingFn - we handle sorting manually
+        enableResizing: true, // Enable resizing for description column
         size: 300,
         minSize: 100,
-        maxSize: 500, // Special max width for description
+        maxSize: 500,
       }),
       columnHelper.accessor((row) => (isFolder(row) ? '' : row.startTime), {
         id: 'startTime',
@@ -104,7 +105,7 @@ export const useTableColumns = () => {
         enableColumnFilter: false,
         enableHiding: false,
         enableSorting: true,
-        // Remove custom sortingFn - we handle sorting manually
+        enableResizing: false, // Disable resizing for startTime column
         size: 150,
         minSize: 50,
         maxSize: 300,
@@ -123,7 +124,7 @@ export const useTableColumns = () => {
         enableColumnFilter: false,
         enableHiding: true,
         enableSorting: true,
-        // Remove custom sortingFn - we handle sorting manually
+        enableResizing: true, // Enable resizing for hierarchy column
         size: 250,
         minSize: 50,
         maxSize: 300,
@@ -142,7 +143,7 @@ export const useTableColumns = () => {
         enableColumnFilter: false,
         enableHiding: true,
         enableSorting: true,
-        // Remove custom sortingFn - we handle sorting manually
+        enableResizing: false, // Disable resizing for lastUpdated column
         size: 150,
         minSize: 50,
         maxSize: 300,
@@ -157,7 +158,7 @@ export const useTableColumns = () => {
         enableColumnFilter: false,
         enableHiding: true,
         enableSorting: true,
-        // Remove custom sortingFn - we handle sorting manually
+        enableResizing: true, // Enable resizing for impact column
         size: 120,
         minSize: 50,
         maxSize: 300,
@@ -167,7 +168,6 @@ export const useTableColumns = () => {
         header: 'סביבה',
         cell: (info) => {
           if (isFolder(info.row.original)) return null;
-          // Changed from EnvironmentBadge to plain Text
           return (
             <Text c="#3E4758" fw={400}>
               {info.getValue()}
@@ -177,7 +177,7 @@ export const useTableColumns = () => {
         enableColumnFilter: true,
         enableHiding: true,
         enableSorting: true,
-        // Remove custom sortingFn - we handle sorting manually
+        enableResizing: false, // Disable resizing for environment column
         filterFn: (row, columnId, filterValue) => {
           if (!filterValue || isFolder(row.original)) return true;
           const environment = (row.original as DataItem).environment;
@@ -201,7 +201,7 @@ export const useTableColumns = () => {
         enableColumnFilter: true,
         enableHiding: true,
         enableSorting: true,
-        // Remove custom sortingFn - we handle sorting manually
+        enableResizing: false, // Disable resizing for origin column
         size: 120,
         minSize: 50,
         maxSize: 300,
@@ -220,7 +220,7 @@ export const useTableColumns = () => {
         enableColumnFilter: false,
         enableHiding: true,
         enableSorting: true,
-        // Remove custom sortingFn - we handle sorting manually
+        enableResizing: false, // Disable resizing for snId column
         size: 150,
         minSize: 50,
         maxSize: 300,
@@ -235,14 +235,14 @@ export const useTableColumns = () => {
         enableColumnFilter: true,
         enableHiding: true,
         enableSorting: true,
-        // Remove custom sortingFn - we handle sorting manually
+        enableResizing: false, // Disable resizing for severity column
         filterFn: (row, columnId, filterValue) => {
           if (!filterValue || isFolder(row.original)) return true;
           const severity = (row.original as DataItem).severity;
           return severity === filterValue;
         },
         size: 120,
-        minSize: 50,
+        minSize: 120,
         maxSize: 300,
       }),
     ],

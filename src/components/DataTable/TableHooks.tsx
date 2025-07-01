@@ -483,20 +483,18 @@ export const useTable = (
       columnSizing,
     },
     onColumnOrderChange: setColumnOrder,
-    onSortingChange: handleSortingChange, // Use our custom handler
+    onSortingChange: handleSortingChange,
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
     onColumnSizingChange: setColumnSizing,
     getFilteredRowModel: getFilteredRowModel(),
-    // Remove getSortedRowModel since we handle sorting manually
     getCoreRowModel: getCoreRowModel(),
     enableColumnResizing: true,
     columnResizeMode: 'onChange',
     enableRowSelection: (row) => !isFolder(row.original),
     getRowId: (row) => row.id,
-    // Enable manual sorting - this tells TanStack to not sort the data
     manualSorting: true,
   });
 
@@ -523,19 +521,10 @@ export const useTable = (
     return { selectedRowsCount, totalFilteredRows, selectedRowIds };
   }, [table, rowSelection]);
 
-  // Get columns that can be hidden
+  // Get ALL columns for reordering (including non-hidable ones)
+  // But only return hidable columns for the column selector UI controls
   const allColumns = useMemo(
-    () =>
-      table.getAllColumns().filter((column) => {
-        return (
-          typeof column.accessorFn !== 'undefined' &&
-          column.getCanHide() &&
-          column.id !== 'select' &&
-          column.id !== 'objectId' &&
-          column.id !== 'description' &&
-          column.id !== 'startTime'
-        );
-      }),
+    () => table.getAllColumns(), // Return ALL columns for drag & drop
     [table]
   );
 
